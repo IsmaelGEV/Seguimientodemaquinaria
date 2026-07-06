@@ -1,0 +1,529 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Seguimiento de Maquinaria</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div class="sidebar-top">
+          <div class="brand">
+            <div class="brand-mark">FD</div>
+            <div><h1>Seguimiento</h1><p>De Maquinaria</p></div>
+          </div>
+          <nav class="nav-list" aria-label="Secciones">
+            <button class="nav-item active" type="button" data-view="dashboard" title="Panel">
+              <span class="icon"><svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></span>
+              <span>Panel</span>
+            </button>
+            <button class="nav-item" type="button" data-view="movements" title="Movimientos">
+              <span class="icon"><svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/><line x1="8" y1="9" x2="10" y2="9"/></svg></span>
+              <span>Movimientos</span>
+            </button>
+            <button class="nav-item" type="button" data-view="centrosCosto" title="Centros de costo">
+              <span class="icon"><svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13" rx="1"/><path d="M16 3v4"/><path d="M8 3v4"/><line x1="3" y1="12" x2="21" y2="12"/></svg></span>
+              <span>Centros de costo</span>
+            </button>
+            <button class="nav-item" type="button" data-view="maquinaria" title="Maquinaria">
+              <span class="icon"><svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/><path d="M5 17h-.5a1.5 1.5 0 0 1-1.5-1.5V10a1 1 0 0 1 1-1h9l4 4h1a1 1 0 0 1 1 1v2.5A1.5 1.5 0 0 1 17.5 17H19"/><path d="M9 17h6"/><path d="M13 9V6a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v3"/></svg></span>
+              <span>Maquinaria</span>
+            </button>
+            <button class="nav-item" type="button" data-view="choferes" title="Choferes">
+              <span class="icon"><svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
+              <span>Choferes</span>
+            </button>
+            <button class="nav-item" type="button" data-view="vehiculos" title="Vehículos">
+              <span class="icon"><svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 5v3h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></span>
+              <span>Vehículos</span>
+            </button>
+            <button class="nav-item" id="navUsers" type="button" data-view="users" title="Usuarios" style="display: none;">
+              <span class="icon"><svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
+              <span>Usuarios</span>
+            </button>
+            <button class="nav-item" type="button" data-view="profile" title="Mi Perfil">
+              <span class="icon"><svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/><circle cx="12" cy="7" r="1.5" fill="currentColor" stroke="none"/></svg></span>
+              <span>Mi Perfil</span>
+            </button>
+          </nav>
+        </div>
+        <div class="user-session" id="userSession">
+          <div class="user-info">
+            <span class="user-avatar" id="userAvatar">U</span>
+            <div>
+              <strong id="sessionUsername">Cargando...</strong>
+              <p id="sessionRole">Usuario</p>
+            </div>
+          </div>
+          <button class="logout-button" id="logoutBtn" type="button" title="Cerrar sesión">Salir ↩</button>
+        </div>
+      </aside>
+      <main class="main">
+        <header class="topbar">
+          <div><h2 id="view-title">Panel</h2><p id="view-subtitle">26 de junio de 2026</p></div>
+        </header>
+        <section class="view active-view" id="dashboardView">
+          <!-- MEJORA 1: Filtros temporales (Histórico/Mes/Semana) y de Ubicación
+               (Centro de costo) para las métricas del Dashboard. Ver renderMetrics()
+               en app.js: escucha estos dos <select> y recalcula Movimientos,
+               En Taller y Sin verificar en base a ellos. -->
+          <section class="dashboard-filters" id="dashboardFilters">
+            <label>Periodo
+              <select id="dashboardPeriodFilter">
+                <option value="historico">Histórico</option>
+                <option value="mes">Este mes</option>
+                <option value="semana">Esta semana</option>
+              </select>
+            </label>
+            <label>Ubicación (Centro de costo)
+              <select id="dashboardLocationFilter">
+                <option value="">Todas las ubicaciones</option>
+              </select>
+            </label>
+          </section>
+
+          <div class="metrics-grid" id="metricsGrid"></div>
+
+          <!-- MEJORA 2 y 4: Acciones rápidas + badge de auditoría de contraseñas,
+               visibles únicamente para el rol Administrador. La visibilidad se
+               controla en updateSessionUI() (app.js). -->
+          <div class="admin-quick-actions" id="adminQuickActions" style="display:none;">
+            <button class="primary-button" id="quickUploadMaquinariaBtn" type="button">
+              <span>📤</span><span>Cargar Excel de Maquinarias</span>
+            </button>
+            <button class="primary-button" id="quickRegisterUserBtn" type="button">
+              <span>➕</span><span>Registrar nuevo usuario</span>
+            </button>
+            <div class="admin-audit-badge" id="adminAuditBadge"></div>
+          </div>
+
+          <div class="content-grid">
+            <section class="panel wide-panel">
+              <div class="panel-header"><h3>Movimientos recientes</h3><button class="ghost-button" type="button" data-view-switch="movements">Ver tabla</button></div>
+              <div class="table-wrap compact"><table><thead><tr><th>ID</th><th>Fecha</th><th>Guía / Memo</th><th>Maquinaria</th><th>Origen</th><th>Destino</th><th>Estado</th></tr></thead><tbody id="recentRows"></tbody></table></div>
+            </section>
+            <!-- MEJORA 3: además de las alertas ya existentes, renderAlerts()
+                 antepone alertas críticas de maquinaria con más de 5 días en
+                 Taller sin movimiento de salida posterior. -->
+            <section class="panel"><div class="panel-header"><h3>Alertas</h3></div><div class="alert-list" id="alertList"></div></section>
+          </div>
+        </section>
+        <section class="view" id="movementsView">
+          <section class="filters-panel">
+            <label>Buscar<input id="searchInput" type="search" placeholder="Guía, maquinaria, chofer, patente..." /></label>
+            <label>Desde<input id="fromDate" type="date" /></label>
+            <label>Hasta<input id="toDate" type="date" /></label>
+          </section>
+          <section class="panel data-panel">
+            <div class="panel-header">
+              <h3>Registro</h3>
+              <div style="display: flex; gap: 8px; align-items: center;">
+                <span class="count-pill" id="resultCount">0</span>
+                <button class="icon-button" id="exportCsv" type="button" title="Exportar CSV" aria-label="Exportar CSV">⇩</button>
+                <button class="primary-button" id="openForm" type="button"><span>＋</span><span>Nuevo</span></button>
+              </div>
+            </div>
+            <div class="table-wrap">
+              <table id="movementsTable">
+                <thead>
+                  <tr>
+                    <th class="id-column">ID</th>
+                    <th>Fecha</th>
+                    <th>Guía / Memo</th>
+                    <th>Maquinaria</th>
+                    <th>Emisor</th>
+                    <th>Destino</th>
+                    <th>Chofer</th>
+                    <th>Patente</th>
+                    <th>Verificación</th>
+                    <th>Recepción</th>
+                    <th>Cargado por</th>
+                    <th class="action-column">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody id="movementRows"></tbody>
+              </table>
+            </div>
+          </section>
+        </section>
+        <!-- VISTA CENTROS DE COSTO -->
+        <section class="view" id="centrosCostoView">
+          <section class="panel data-panel">
+            <div class="panel-header">
+              <h3>Centros de costo</h3>
+              <div style="display:flex;gap:8px;align-items:center;">
+              </div>
+            </div>
+            <div id="centroCostoAdminForm" style="display:none;margin-bottom:14px;">
+              <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;">
+                <label style="flex:1;min-width:200px;margin:0;">
+                  <span style="font-size:12px;font-weight:650;color:var(--muted);">Nombre del centro de costo</span>
+                  <input type="text" id="centroCostoNameInput" placeholder="Ej: TALLER, LA POLCURA..." style="margin-top:4px;" />
+                </label>
+                <label style="flex:1;min-width:160px;margin:0;">
+                  <span style="font-size:12px;font-weight:650;color:var(--muted);">Número del centro de costo</span>
+                  <input type="text" id="centroCostoNumberInput" placeholder="Ej: CC-001" style="margin-top:4px;" />
+                </label>
+                <button class="primary-button" id="addCentroCostoBtn" type="button" style="margin-top:0;">Agregar</button>
+                <button class="ghost-button" id="cancelCentroCostoEdit" type="button" style="display:none;">Cancelar</button>
+              </div>
+            </div>
+            <div class="table-wrap">
+              <table id="centroCostoTable">
+                <thead><tr><th>#</th><th>Número</th><th>Nombre</th><th class="action-column">Acciones</th></tr></thead>
+                <tbody id="centroCostoRows"></tbody>
+              </table>
+            </div>
+          </section>
+        </section>
+
+        <!-- VISTA MAQUINARIA -->
+        <section class="view" id="maquinariaView">
+          <section class="panel data-panel">
+            <div class="panel-header">
+              <h3>Maquinaria <span class="count-pill" id="maquinariaCount">0</span></h3>
+              <div style="display:flex;gap:8px;align-items:center;">
+              </div>
+            </div>
+            <div id="maquinariaAdminForm" style="display:none;margin-bottom:14px;">
+              <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;padding:12px;background:#f8faf9;border:1px solid var(--line);border-radius:8px;margin-bottom:12px;">
+                <div style="flex:1;min-width:220px;">
+                  <span style="display:block;font-size:12px;font-weight:650;color:var(--muted);margin-bottom:4px;">Cargar Excel de Maquinaria</span>
+                  <input type="file" id="maquinariaFileInput" accept=".xlsx,.xls" style="width:100%;min-height:auto;padding:6px;background:#fff;" />
+                </div>
+                <button class="primary-button" id="uploadMaquinariaBtn" type="button">Cargar Excel</button>
+              </div>
+              <p style="font-size:12px;color:var(--muted);margin:0 0 14px 0;">El archivo debe tener columnas de <strong>código</strong> y <strong>descripción</strong> (ej. "Cod. Maquina" / "Desc. Maquina"). Al cargarlo se <strong>reemplaza</strong> el catálogo completo de Maquinaria.</p>
+              <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;">
+                <label style="flex:0 0 140px;margin:0;">
+                  <span style="font-size:12px;font-weight:650;color:var(--muted);">Código</span>
+                  <input type="text" id="maquinariaCodeInput" placeholder="Ej: 136" style="margin-top:4px;" />
+                </label>
+                <label style="flex:1;min-width:220px;margin:0;">
+                  <span style="font-size:12px;font-weight:650;color:var(--muted);">Descripción</span>
+                  <input type="text" id="maquinariaDescInput" placeholder="Ej: TRACTOR LAND REX 85F #36" style="margin-top:4px;" />
+                </label>
+                <button class="primary-button" id="addMaquinariaBtn" type="button" style="margin-top:0;">Agregar</button>
+                <button class="ghost-button" id="cancelMaquinariaEdit" type="button" style="display:none;">Cancelar</button>
+              </div>
+            </div>
+            <div class="table-wrap">
+              <table id="maquinariaTable">
+                <thead><tr><th>#</th><th>Código</th><th>Descripción</th><th class="action-column">Acciones</th></tr></thead>
+                <tbody id="maquinariaRows"></tbody>
+              </table>
+            </div>
+          </section>
+        </section>
+
+        <!-- VISTA CHOFERES -->
+        <section class="view" id="choferesView">
+          <section class="panel data-panel">
+            <div class="panel-header">
+              <h3>Choferes</h3>
+              <div style="display:flex;gap:8px;align-items:center;">
+              </div>
+            </div>
+            <div id="driverAdminForm" style="display:none;margin-bottom:14px;">
+              <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;">
+                <label style="flex:1;min-width:160px;margin:0;">
+                  <span style="font-size:12px;font-weight:650;color:var(--muted);">Nombre</span>
+                  <input type="text" id="newDriverName" placeholder="Nombre..." style="margin-top:4px;" />
+                </label>
+                <label style="flex:1;min-width:160px;margin:0;">
+                  <span style="font-size:12px;font-weight:650;color:var(--muted);">Apellido</span>
+                  <input type="text" id="newDriverLastName" placeholder="Apellido..." style="margin-top:4px;" />
+                </label>
+                <button class="primary-button" id="addDriverBtn" type="button">Agregar</button>
+                <button class="ghost-button" id="cancelDriverEdit" type="button" style="display:none;">Cancelar</button>
+              </div>
+            </div>
+            <div class="table-wrap">
+              <table id="choferTable">
+                <thead><tr><th>#</th><th>Nombre</th><th>Apellido</th><th class="action-column">Acciones</th></tr></thead>
+                <tbody id="driverRows"></tbody>
+              </table>
+            </div>
+          </section>
+        </section>
+
+        <!-- VISTA VEHÍCULOS -->
+        <section class="view" id="vehiculosView">
+          <section class="panel data-panel">
+            <div class="panel-header">
+              <h3>Vehículos</h3>
+              <div style="display:flex;gap:8px;align-items:center;">
+              </div>
+            </div>
+            <div id="vehicleAdminForm" style="display:none;margin-bottom:14px;">
+              <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;">
+                <label style="flex:1;min-width:140px;margin:0;">
+                  <span style="font-size:12px;font-weight:650;color:var(--muted);">Patente *</span>
+                  <input type="text" id="newVehiclePlate" placeholder="Ej: AB-CD-12..." style="margin-top:4px;" />
+                </label>
+                <label style="flex:1;min-width:140px;margin:0;">
+                  <span style="font-size:12px;font-weight:650;color:var(--muted);">Marca</span>
+                  <input type="text" id="newVehicleMarca" placeholder="Ej: TOYOTA" style="margin-top:4px;text-transform:uppercase;" />
+                </label>
+                <label style="flex:1;min-width:140px;margin:0;">
+                  <span style="font-size:12px;font-weight:650;color:var(--muted);">Tipo</span>
+                  <input type="text" id="newVehicleTipo" placeholder="Ej: CAMIONETA" style="margin-top:4px;text-transform:uppercase;" />
+                </label>
+                <label style="flex:1;min-width:140px;margin:0;">
+                  <span style="font-size:12px;font-weight:650;color:var(--muted);">Color</span>
+                  <input type="text" id="newVehicleColor" placeholder="Ej: BLANCO" style="margin-top:4px;text-transform:uppercase;" />
+                </label>
+                <button class="primary-button" id="addVehicleBtn" type="button">Agregar</button>
+                <button class="ghost-button" id="cancelVehicleEdit" type="button" style="display:none;">Cancelar</button>
+              </div>
+            </div>
+            <div class="table-wrap">
+              <table id="vehiculoTable">
+                <thead><tr><th>#</th><th>Marca</th><th>Patente</th><th>Tipo</th><th>Color</th><th class="action-column">Acciones</th></tr></thead>
+                <tbody id="vehicleRows"></tbody>
+              </table>
+            </div>
+          </section>
+        </section>
+        <section class="view" id="usersView">
+          <div class="content-grid">
+            <div style="display: grid; gap: 16px;">
+              <section class="panel">
+                <div class="panel-header"><h3>Usuarios registrados</h3></div>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Usuario</th>
+                        <th>Nombre completo</th>
+                        <th>Centro de costo</th>
+                        <th>Correo</th>
+                        <th>Rol</th>
+                        <th>Acciones</th>
+                      </tr>
+                    </thead>
+                    <tbody id="userRows"></tbody>
+                  </table>
+                </div>
+              </section>
+              <section class="panel">
+                <div class="panel-header">
+                  <h3>Auditoría de Recuperación</h3>
+                  <button class="ghost-button" id="clearRecoveryAuditBtn" style="padding: 4px 10px; font-size: 11px; min-height: auto;" type="button">Limpiar historial</button>
+                </div>
+                <div class="table-wrap" style="max-height: 250px;">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Fecha</th>
+                        <th>Usuario</th>
+                        <th>Correo</th>
+                        <th>Área</th>
+                        <th>Estado</th>
+                      </tr>
+                    </thead>
+                    <tbody id="recoveryAuditRows"></tbody>
+                  </table>
+                </div>
+              </section>
+            </div>
+            <section class="panel">
+              <div class="panel-header"><h3 id="userFormTitle">Crear usuario</h3></div>
+              <form id="userForm" class="movement-form">
+                <label>Nombre
+                  <input type="text" name="firstName" required placeholder="Ej: Juan" />
+                </label>
+                <label>Apellido
+                  <input type="text" name="lastName" required placeholder="Ej: Pérez" />
+                </label>
+                <label class="full-field">Centro de costo
+                  <select name="centroCostoAsignado" id="userFormCentroCostoSelect" required></select>
+                </label>
+                <label>Usuario
+                  <input type="text" name="username" id="userFormUsername" required placeholder="Ej: jperez" autocomplete="off" />
+                </label>
+                <label class="full-field">Correo corporativo
+                  <input type="email" name="email" required placeholder="Ej: j.perez@maquinaria.cl" />
+                </label>
+                <label class="full-field">Contraseña
+                  <input type="password" name="pass" required placeholder="Ingrese contraseña" autocomplete="new-password" />
+                </label>
+                <label class="full-field">Rol
+                  <select name="role" required>
+                    <option value="Usuario">Usuario</option>
+                    <option value="Administrador">Administrador</option>
+                  </select>
+                </label>
+                <p id="userFormMessage" style="color: var(--red); font-size: 12px; margin: 0; font-weight: 600;" class="full-field"></p>
+                <div class="full-field" style="display: flex; gap: 10px; margin-top: 10px;">
+                  <button class="primary-button" style="flex: 1;" type="submit">Guardar</button>
+                  <button class="ghost-button" id="userFormCancel" style="flex: 1; display: none;" type="button">Cancelar</button>
+                </div>
+              </form>
+            </section>
+          </div>
+        </section>
+        
+        <section class="view" id="profileView">
+          <div class="content-grid" style="grid-template-columns: 1fr;">
+            <section class="panel" style="max-width: 600px; margin: 0 auto; padding: 32px;">
+              <div style="text-align: center; margin-bottom: 28px;">
+                <div class="user-avatar" id="profileAvatar" style="width: 80px; height: 80px; font-size: 32px; margin: 0 auto 16px auto; background: var(--teal); display: grid; place-items: center; font-weight: 700; color: #fff; border-radius: 50%;">U</div>
+                <h3 id="profileFullName" style="font-size: 22px; margin: 0; color: var(--ink);">Cargando...</h3>
+                <p id="profileRoleBadge" style="margin: 8px 0 0 0;"><span class="status-pill status-ok" id="profileRoleText">Usuario</span></p>
+              </div>
+              
+              <div style="display: grid; gap: 16px; border-top: 1px solid var(--line); padding-top: 24px;">
+                <div style="display: grid; grid-template-columns: 180px 1fr; font-size: 14px;">
+                  <strong style="color: var(--muted);">Nombre de usuario:</strong>
+                  <span id="profileUsername" style="color: var(--ink); font-weight: 600;">-</span>
+                </div>
+                <div style="display: grid; grid-template-columns: 180px 1fr; font-size: 14px;">
+                  <strong style="color: var(--muted);">Correo corporativo:</strong>
+                  <span id="profileEmail" style="color: var(--ink);">-</span>
+                </div>
+                <div style="display: grid; grid-template-columns: 180px 1fr; font-size: 14px;">
+                  <strong style="color: var(--muted);">Centro de costo:</strong>
+                  <span id="profileCentroCosto" style="color: var(--ink);">-</span>
+                </div>
+                <div style="display: grid; grid-template-columns: 180px 1fr; font-size: 14px;">
+                  <strong style="color: var(--muted);">Contraseña:</strong>
+                  <span style="color: var(--muted); font-style: italic;">Oculta por seguridad</span>
+                </div>
+              </div>
+            </section>
+          </div>
+        </section>
+      </main>
+    </div>
+    <div class="drawer-backdrop" id="drawerBackdrop" hidden></div>
+    <aside class="drawer" id="movementDrawer" aria-hidden="true">
+      <div class="drawer-header"><div><h3 id="drawerTitle">Nuevo movimiento</h3><p id="formMessage">Registro local</p></div><button class="icon-button" id="closeForm" type="button" title="Cerrar" aria-label="Cerrar">×</button></div>
+      <form id="movementForm" class="movement-form">
+        <label>Fecha<input name="date" type="date" required /></label>
+        <label>Tipo de documento<select name="docType" id="formDocTypeSelect"><option value="Guía">Guía</option><option value="Memo">Memo</option></select></label>
+        <label id="guideFieldLabel">N° de guía<input name="guideNumber" id="formGuideInput" type="text" inputmode="numeric" pattern="[0-9]{1,10}" maxlength="10" placeholder="Solo números, máx. 10 dígitos" required /></label>
+        <label id="memoFieldLabel" style="display:none;">N° de Memo<input name="memoNumber" id="formMemoInput" type="text" inputmode="numeric" pattern="[0-9]{1,10}" maxlength="10" placeholder="Solo números, máx. 10 dígitos" /></label>
+        <label class="full-field combobox-field">Maquinaria <span style="font-weight:400;color:var(--muted);font-size:12px;">(máximo 5 artículos)</span>
+          <div class="combobox-chips" id="formMachineChips"></div>
+          <input type="text" id="formMachineSearch" autocomplete="off" placeholder="Escriba para buscar y agregar maquinaria..." />
+          <input type="hidden" name="machine" id="formMachineSelect" />
+          <div class="combobox-list" id="formMachineList" hidden></div>
+        </label>
+        <label class="combobox-field">Emisor
+          <input type="text" id="formSenderSearch" autocomplete="off" placeholder="Escriba para buscar..." />
+          <input type="hidden" name="sender" id="formSenderSelect" />
+          <div class="combobox-list" id="formSenderList" hidden></div>
+        </label>
+        <label class="combobox-field">Destino
+          <input type="text" id="formDestinationSearch" autocomplete="off" placeholder="Escriba para buscar..." />
+          <input type="hidden" name="destination" id="formDestinationSelect" />
+          <div class="combobox-list" id="formDestinationList" hidden></div>
+        </label>
+        <label class="combobox-field">Chofer
+          <input type="text" id="formDriverSearch" autocomplete="off" placeholder="Escriba para buscar..." />
+          <input type="hidden" name="driver" id="formDriverSelect" />
+          <div class="combobox-list" id="formDriverList" hidden></div>
+        </label>
+        <label class="combobox-field">Patente
+          <input type="text" id="formVehicleSearch" autocomplete="off" placeholder="Escriba para buscar..." />
+          <input type="hidden" name="vehiclePlate" id="formVehicleSelect" />
+          <div class="combobox-list" id="formVehicleList" hidden></div>
+        </label>
+        <label class="full-field">Nota<textarea name="note" rows="4"></textarea></label>
+        <button class="primary-button full-field" type="submit"><span>✓</span><span>Guardar</span></button>
+      </form>
+    </aside>
+    <aside class="drawer" id="detailDrawer" aria-hidden="true">
+      <div class="drawer-header"><div><h3>Detalle del movimiento</h3><p id="detailSubtitle">Guía Nº -</p></div><button class="icon-button" id="closeDetail" type="button" title="Cerrar" aria-label="Cerrar">×</button></div>
+      <div style="display:grid;gap:14px;">
+        <div class="panel" style="padding:14px;box-shadow:none;">
+          <h3 style="font-size:13px;color:var(--muted);margin:0 0 10px 0;text-transform:uppercase;letter-spacing:.02em;">Movimiento</h3>
+          <div class="detail-grid">
+            <div><strong style="display:block;color:var(--muted);font-size:11px;" id="detailGuideLabel">Guía</strong><span id="detailGuide">-</span></div>
+            <div class="full-field"><strong style="display:block;color:var(--muted);font-size:11px;">Maquinaria</strong><ul id="detailMachine" style="margin:4px 0 0 0;padding-left:18px;"></ul></div>
+          </div>
+        </div>
+        <div class="panel" style="padding:14px;box-shadow:none;">
+          <h3 style="font-size:13px;color:var(--muted);margin:0 0 10px 0;text-transform:uppercase;letter-spacing:.02em;">Chofer y Vehículo</h3>
+          <div class="detail-grid">
+            <div><strong style="display:block;color:var(--muted);font-size:11px;">Chofer</strong><span id="detailDriver">-</span></div>
+            <div><strong style="display:block;color:var(--muted);font-size:11px;">Patente</strong><span id="detailPlate">-</span></div>
+            <div><strong style="display:block;color:var(--muted);font-size:11px;">Marca</strong><span id="detailVehicleBrand">-</span></div>
+            <div><strong style="display:block;color:var(--muted);font-size:11px;">Tipo</strong><span id="detailVehicleType">-</span></div>
+            <div><strong style="display:block;color:var(--muted);font-size:11px;">Color</strong><span id="detailVehicleColor">-</span></div>
+          </div>
+        </div>
+        <div class="panel" style="padding:14px;box-shadow:none;">
+          <h3 style="font-size:13px;color:var(--muted);margin:0 0 10px 0;text-transform:uppercase;letter-spacing:.02em;">Origen y destino</h3>
+          <div class="detail-grid">
+            <div><strong style="display:block;color:var(--muted);font-size:11px;">Usuario emisor</strong><span id="detailSenderUser">-</span></div>
+            <div><strong style="display:block;color:var(--muted);font-size:11px;">Centro de costo del emisor</strong><span id="detailSenderCentro">-</span></div>
+            <div class="full-field"><strong style="display:block;color:var(--muted);font-size:11px;">Destino del movimiento</strong><span id="detailDestination">-</span></div>
+          </div>
+        </div>
+        <div class="panel" style="padding:14px;box-shadow:none;">
+          <h3 style="font-size:13px;color:var(--muted);margin:0 0 10px 0;text-transform:uppercase;letter-spacing:.02em;">Verificación y fechas</h3>
+          <div class="detail-grid">
+            <div><strong style="display:block;color:var(--muted);font-size:11px;">Usuario que verificó</strong><span id="detailVerifiedBy">-</span></div>
+            <div><strong style="display:block;color:var(--muted);font-size:11px;">Estado de verificación</strong><span id="detailVerification">-</span></div>
+            <div><strong style="display:block;color:var(--muted);font-size:11px;">Fecha de emisión</strong><span id="detailDate">-</span></div>
+            <div><strong style="display:block;color:var(--muted);font-size:11px;">Fecha de recepción</strong><span id="detailReceivedDate">-</span></div>
+          </div>
+        </div>
+        <div class="panel" id="detailNotePanel" style="padding:14px;box-shadow:none;">
+          <h3 style="font-size:13px;color:var(--muted);margin:0 0 10px 0;text-transform:uppercase;letter-spacing:.02em;">Nota</h3>
+          <p id="detailNote" style="margin:0;font-size:13px;">-</p>
+        </div>
+      </div>
+    </aside>
+    <div class="login-overlay" id="loginOverlay">
+      <div class="login-card">
+        <div class="login-header">
+          <div class="brand-mark">SM</div>
+          <h2 id="loginCardTitle">Seguimiento de Maquinaria</h2>
+          <p id="loginCardSubtitle">Iniciar sesión</p>
+        </div>
+        
+        <form id="loginForm" class="login-form">
+          <label>Usuario o Correo corporativo
+            <input type="text" id="loginUsername" required placeholder="Ej: nombre de usuario o usuario@maquinaria.cl" autocomplete="username" />
+          </label>
+          <label>Contraseña
+            <input type="password" id="loginPassword" required placeholder="Ingrese contraseña" autocomplete="current-password" />
+          </label>
+          <div class="login-error" id="loginError" hidden>Credenciales incorrectas</div>
+          <button class="primary-button full-field" type="submit">Ingresar</button>
+          <div style="text-align: center; margin-top: 8px;">
+            <button type="button" id="showRecoveryBtn" style="border: none; background: transparent; padding: 0; text-decoration: underline; color: var(--teal); font-size: 12px; cursor: pointer; min-height: auto;">¿Olvidó su contraseña?</button>
+          </div>
+        </form>
+
+        <form id="recoveryForm" class="login-form" style="display: none;">
+          <label>Usuario o Correo corporativo
+            <input type="text" id="recoveryInput" required placeholder="Ej: nombre de usuario o usuario@maquinaria.cl" />
+          </label>
+          <div id="recoveryMessage" style="font-size: 12px; font-weight: 600; text-align: center; padding: 8px; border-radius: 6px;" hidden></div>
+          <button class="primary-button full-field" type="submit">Solicitar clave</button>
+          <div style="text-align: center; margin-top: 8px;">
+            <button type="button" id="backToLoginBtn" style="border: none; background: transparent; padding: 0; text-decoration: underline; color: var(--muted); font-size: 12px; cursor: pointer; min-height: auto;">Volver al inicio de sesión</button>
+          </div>
+        </form>
+
+        <div class="login-hint">
+          <p><strong>Cuentas de prueba:</strong></p>
+          <ul>
+            <li><code>admin</code> / <code>admin123</code> (Admin)</li>
+            <li><code>operador1</code> / <code>oper123</code> (Huerto)</li>
+            <li><code>taller1</code> / <code>tall123</code> (Taller)</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <datalist id="locationOptions"></datalist><datalist id="driverOptions"></datalist>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="./app.js"></script>
+  </body>
+</html>

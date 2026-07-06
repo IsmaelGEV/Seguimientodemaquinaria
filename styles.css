@@ -1,0 +1,787 @@
+/* ==========================================================================
+   Seguimiento de Maquinaria — hoja de estilos Mobile-First
+   --------------------------------------------------------------------------
+   Metodología: todo estilo BASE (fuera de media queries) está pensado para
+   pantallas de teléfono. A partir de ahí se usan media queries `min-width`
+   (nunca `max-width`) para ir "agregando" complejidad de layout a medida que
+   hay más espacio disponible (progressive enhancement).
+
+   Breakpoints estándar usados en todo el archivo:
+     Base (0px)   → teléfonos en vertical (1 columna, navegación horizontal)
+     sm  (480px)  → teléfonos grandes / en horizontal
+     md  (640px)  → tablets pequeñas, formularios de 2 columnas
+     lg  (768px)  → tablets grandes
+     xl  (1024px) → laptops / escritorio → aparece la barra lateral fija
+     xxl (1280px) → escritorio grande → grillas de catálogos a 4 columnas
+   ========================================================================== */
+
+:root {
+  --bg: #f4f6f7;
+  --surface: #fff;
+  --ink: #17212b;
+  --muted: #60707c;
+  --line: #d9e1e5;
+  --teal: #126b63;
+  --teal-dark: #0d4d48;
+  --amber: #c77618;
+  --red: #b83d35;
+  --shadow: 0 12px 32px rgba(23, 33, 43, .08);
+
+  /* Valores fluidos reutilizables: se recalculan solos entre breakpoints
+     usando clamp(), reduciendo la cantidad de reglas específicas por media query. */
+  --space-page: clamp(14px, 4vw, 24px);
+  --space-card: clamp(12px, 3vw, 16px);
+  --radius: 8px;
+}
+
+* { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: "Segoe UI", Arial, sans-serif;
+  letter-spacing: 0;
+  -webkit-font-smoothing: antialiased;
+}
+
+button, input, select, textarea { font: inherit; }
+button { cursor: pointer; }
+img, svg { max-width: 100%; display: block; }
+
+/* ==========================================================================
+   1. ESTRUCTURA GENERAL (app-shell): flujo mobile-first
+   ========================================================================== */
+
+/* Base (móvil): sidebar arriba (barra horizontal) + contenido abajo, todo en
+   flujo normal de documento (sin altura fija ni scroll independiente). */
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.sidebar {
+  background: #16252a;
+  color: #fff;
+  padding: 12px var(--space-page) 14px;
+  width: 100%;
+}
+
+.sidebar-top {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 40px;
+}
+
+.brand-mark {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, .28);
+  border-radius: var(--radius);
+  background: #21373d;
+  font-weight: 700;
+}
+
+.brand h1, .brand p,
+.topbar h2, .topbar p,
+.panel h3, .drawer h3, .drawer p {
+  margin: 0;
+}
+
+.brand h1 { font-size: 17px; line-height: 1.2; }
+.brand p { color: #b8c7cc; font-size: 13px; }
+
+/* Navegación: en móvil es una barra horizontal deslizable (scroll-x), cada
+   ítem es un "chip" vertical (ícono + etiqueta). Así entran todas las
+   secciones sin ocupar media pantalla de alto, y el usuario navega con un
+   gesto de swipe — patrón estándar de navegación mobile-first. */
+.nav-list {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 6px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  padding-bottom: 2px;
+  margin: 0 calc(var(--space-page) * -1);
+  padding-left: var(--space-page);
+  padding-right: var(--space-page);
+}
+
+.nav-item {
+  display: grid;
+  grid-template-columns: 1fr;
+  justify-items: center;
+  align-content: center;
+  gap: 4px;
+  flex: 0 0 auto;
+  min-width: 68px;
+  width: 68px;
+  min-height: 56px;
+  padding: 6px 4px;
+  border: 0;
+  border-radius: var(--radius);
+  background: transparent;
+  color: #c9d7dc;
+  text-align: center;
+  font-size: 11px;
+  line-height: 1.15;
+}
+
+.nav-item span:last-child {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.nav-item:hover, .nav-item.active { background: #253d43; color: #fff; }
+.icon { display: flex; align-items: center; justify-content: center; font-size: 17px; }
+
+.main { min-width: 0; padding: var(--space-page); width: 100%; }
+
+.topbar {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  min-height: auto;
+  margin-bottom: 16px;
+}
+
+.topbar h2 { font-size: 21px; line-height: 1.2; }
+.topbar p, .drawer p { color: var(--muted); font-size: 13px; margin-top: 5px; }
+
+.top-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+/* Controles: 44px de alto mínimo en toda la app → objetivo táctil accesible
+   (recomendación WCAG / Material / iOS ~44-48px) en cualquier dispositivo. */
+.primary-button, .ghost-button, .icon-button {
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  min-height: 44px;
+}
+
+.primary-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: 104px;
+  padding: 0 14px;
+  background: var(--teal);
+  color: #fff;
+  font-weight: 650;
+}
+.primary-button:hover { background: var(--teal-dark); }
+
+.ghost-button { padding: 0 12px; background: #edf4f1; color: var(--teal-dark); }
+
+.icon-button {
+  display: grid;
+  width: 44px;
+  place-items: center;
+  background: var(--surface);
+  border-color: var(--line);
+  color: var(--ink);
+  font-size: 20px;
+}
+
+.view { display: none; }
+.active-view { display: block; }
+
+/* ==========================================================================
+   2. GRILLAS FLUIDAS (dashboard, catálogos, formularios de filtro)
+   Base: todo apilado a 1 columna. Se abren progresivamente con más espacio.
+   ========================================================================== */
+
+.metrics-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.metric-card, .panel, .filters-panel {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.metric-card { min-height: 100px; padding: var(--space-card); }
+.metric-card span { display: block; color: var(--muted); font-size: 13px; margin-bottom: 8px; }
+.metric-card strong { display: block; font-size: 26px; line-height: 1; }
+.metric-card small { display: block; margin-top: 8px; color: var(--muted); }
+
+.content-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+
+.panel { min-width: 0; padding: var(--space-card); }
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 36px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+.panel h3 { font-size: 15px; }
+
+.filters-panel {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  padding: 14px;
+  margin-bottom: 16px;
+}
+
+.catalog-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+
+/* --- Dashboard: filtros temporales/ubicación, acciones rápidas de Admin y
+   badge de auditoría de contraseñas (todo mobile-first: 1 columna en
+   teléfono, se abre a 2 columnas / fila desde el breakpoint sm). --- */
+.dashboard-filters {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  padding: 14px;
+  margin-bottom: 16px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+@media (min-width: 480px) {
+  .dashboard-filters { grid-template-columns: 1fr 1fr; }
+}
+
+.admin-quick-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.admin-quick-actions .primary-button { width: 100%; }
+@media (min-width: 640px) {
+  .admin-quick-actions { flex-direction: row; flex-wrap: wrap; align-items: center; }
+  .admin-quick-actions .primary-button { width: auto; flex: 1 1 220px; }
+}
+
+.admin-audit-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 8px 16px;
+  border-radius: 999px;
+  background: #edf4f1;
+  border: 1px solid var(--line);
+  font-size: 13px;
+  font-weight: 650;
+  color: var(--teal-dark);
+  text-align: center;
+}
+@media (min-width: 640px) {
+  .admin-audit-badge { flex: 1 1 260px; }
+}
+
+label {
+  display: grid;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 650;
+}
+
+input, select, textarea {
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: #fff;
+  color: var(--ink);
+  padding: 8px 10px;
+  font-size: 16px; /* evita auto-zoom de iOS al enfocar inputs */
+}
+textarea { min-height: 96px; resize: vertical; }
+
+@media (min-width: 640px) {
+  input, select, textarea { font-size: 14px; }
+}
+
+.data-panel { padding-bottom: 8px; }
+
+/* ==========================================================================
+   3. TABLAS: siempre dentro de un contenedor con scroll horizontal propio.
+   Es el patrón responsivo estándar para datos tabulares densos: en vez de
+   romper la tabla en tarjetas (lo que complica columnas de acciones/estado),
+   se le da al usuario un contenedor deslizable con las cabeceras fijas.
+   ========================================================================== */
+
+.table-wrap {
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  max-height: 60vh;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+.table-wrap.compact { max-height: 360px; }
+
+table { width: 100%; border-collapse: collapse; min-width: 760px; background: #fff; }
+
+th, td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  vertical-align: top;
+  font-size: 12.5px;
+}
+th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: #edf4f1;
+  color: #344852;
+  font-weight: 700;
+}
+tbody tr:hover { background: #f8faf9; }
+
+.machine-cell {
+  max-width: 220px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.status-pill, .count-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 26px;
+  border-radius: 999px;
+  padding: 0 10px;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.count-pill { background: #edf4f1; color: var(--teal-dark); }
+.status-workshop { background: #fff3e0; color: #8a4a08; }
+.status-field { background: #e9f4ee; color: #28633d; }
+.status-pending { background: #fdecea; color: #8d2f2a; }
+.status-rejected { background: #fde1de; color: #8a2620; border: 1px solid rgba(184, 61, 53, .25); }
+.status-ok { background: #edf4f1; color: var(--teal-dark); }
+
+.alert-list { display: grid; gap: 10px; }
+.alert-item { border-left: 4px solid var(--amber); background: #fffaf3; border-radius: 6px; padding: 10px 12px; }
+.alert-item.critical { border-left-color: var(--red); background: #fff5f4; }
+.alert-item strong { display: block; font-size: 14px; }
+.alert-item span { display: block; color: var(--muted); font-size: 12px; margin-top: 3px; }
+
+.tag-list { display: flex; flex-wrap: wrap; gap: 8px; max-height: 420px; overflow: auto; }
+.tag { border-radius: 999px; background: #f2f5f6; border: 1px solid var(--line); padding: 7px 10px; font-size: 12px; }
+
+/* ==========================================================================
+   4. PANEL LATERAL (drawer): ancho fluido, siempre 100% legible en móvil.
+   ========================================================================== */
+
+.drawer-backdrop { position: fixed; inset: 0; z-index: 10; background: rgba(19, 31, 36, .32); }
+
+.drawer {
+  position: fixed;
+  inset: 0 0 0 auto;
+  z-index: 11;
+  width: min(520px, 100vw);
+  transform: translateX(105%);
+  transition: transform 160ms ease;
+  background: var(--surface);
+  box-shadow: -16px 0 36px rgba(23, 33, 43, .18);
+  padding: var(--space-page);
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.drawer.open { transform: translateX(0); }
+
+.drawer-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.movement-form {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+}
+.full-field { grid-column: 1 / -1; }
+
+/* Grillas de pares "etiqueta: valor" usadas en el panel de Detalle del
+   movimiento: 1 columna en teléfono, 2 columnas desde tablets pequeñas. */
+.detail-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px 16px;
+  font-size: 13px;
+}
+@media (min-width: 480px) {
+  .detail-grid { grid-template-columns: 1fr 1fr; }
+}
+
+/* ==========================================================================
+   5. SESIÓN DE USUARIO (dentro de la barra de navegación)
+   Base (móvil): fila horizontal compacta debajo de la navegación.
+   ========================================================================== */
+
+.user-session {
+  border-top: 1px solid rgba(255, 255, 255, .1);
+  padding-top: 12px;
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.user-info { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.user-avatar {
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--teal);
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  color: #fff;
+  text-transform: uppercase;
+  font-size: 13px;
+}
+.user-info strong {
+  display: block;
+  font-size: 13px;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 40vw;
+}
+.user-info p { margin: 0; font-size: 11px; color: #b8c7cc; }
+
+.logout-button {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, .2);
+  color: #c9d7dc;
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 12px;
+  text-align: center;
+  transition: all 150ms ease;
+  flex-shrink: 0;
+  min-height: 40px;
+}
+.logout-button:hover { background: rgba(255, 255, 255, .1); color: #fff; border-color: rgba(255, 255, 255, .4); }
+
+/* ==========================================================================
+   6. LOGIN
+   ========================================================================== */
+
+.login-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(19, 31, 36, .85);
+  backdrop-filter: blur(8px);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.login-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, .15);
+  width: 100%;
+  max-width: 400px;
+  padding: 26px 20px;
+  display: grid;
+  gap: 20px;
+}
+
+.login-header { text-align: center; display: grid; justify-items: center; gap: 12px; }
+.login-header .brand-mark {
+  background: #21373d;
+  color: #fff;
+  width: 50px;
+  height: 50px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  font-size: 20px;
+  border: 1px solid rgba(255, 255, 255, .1);
+}
+.login-header h2 { margin: 0; font-size: 19px; color: var(--ink); }
+.login-header p { margin: 0; font-size: 13px; color: var(--muted); }
+
+.login-form { display: grid; gap: 16px; }
+.login-error {
+  color: var(--red);
+  font-size: 12px;
+  font-weight: 600;
+  text-align: center;
+  background: #fff5f4;
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(184, 61, 53, .15);
+}
+
+.login-hint { border-top: 1px dashed var(--line); padding-top: 16px; font-size: 12px; color: var(--muted); }
+.login-hint p { margin: 0; margin-bottom: 6px; }
+.login-hint ul { margin: 0; padding-left: 16px; display: grid; gap: 4px; }
+.login-hint code { background: #edf4f1; color: var(--teal-dark); padding: 2px 4px; border-radius: 4px; font-family: monospace; }
+
+/* ==========================================================================
+   7. AUDITORÍA / ACCIONES DE TABLA / COMBOBOX MAQUINARIA / VERIFICACIÓN
+   (sin cambios de layout responsivo particular; ya conviven bien dentro del
+   contenedor con scroll horizontal de la sección 3, o son de ancho fluido)
+   ========================================================================== */
+
+.audit-modified { font-size: 10px; color: var(--amber); margin-top: 2px; font-weight: 600; display: block; }
+
+.action-btn-group { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.action-btn {
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--surface);
+  color: var(--ink);
+  padding: 6px 9px;
+  font-size: 11px;
+  font-weight: 600;
+  transition: all 120ms ease;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.action-btn.edit-btn:hover { border-color: var(--teal); color: var(--teal); background: #edf4f1; }
+.action-btn.delete-btn:hover { border-color: var(--red); color: var(--red); background: #fff5f4; }
+
+.action-column, .id-column { display: none; }
+.show-actions .action-column, .show-actions .id-column { display: table-cell; }
+
+.verify-select {
+  width: auto;
+  min-width: 130px;
+  min-height: 34px;
+  padding: 4px 8px;
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  cursor: pointer;
+}
+.verify-select:disabled { cursor: not-allowed; opacity: .85; }
+.verify-select.status-pending { background: #fdecea; color: #8d2f2a; }
+.verify-select.status-rejected { background: #fde1de; color: #8a2620; }
+.verify-select.status-ok { background: #edf4f1; color: var(--teal-dark); }
+
+.combobox-field { position: relative; }
+.combobox-field input[type="text"] { width: 100%; }
+
+.combobox-chips { display: none; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+.machine-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  background: #edf4f1;
+  color: var(--teal-dark);
+  border: 1px solid rgba(18, 107, 99, .25);
+  border-radius: 999px;
+  padding: 4px 6px 4px 12px;
+  font-size: 12px;
+  font-weight: 650;
+}
+.machine-chip-label { white-space: normal; word-break: break-word; }
+.machine-chip-remove {
+  border: none;
+  background: transparent;
+  color: var(--teal-dark);
+  cursor: pointer;
+  font-size: 15px;
+  line-height: 1;
+  padding: 3px 6px;
+  border-radius: 50%;
+}
+.machine-chip-remove:hover { background: rgba(18, 107, 99, .15); }
+
+/* Detalle del movimiento: etiqueta de código de maquinaria, separada del
+   texto de la descripción para no confundirse con la numeración de la lista. */
+.machine-code-badge {
+  display: inline-block;
+  min-width: 26px;
+  text-align: center;
+  background: #edf4f1;
+  color: var(--teal-dark);
+  border-radius: 6px;
+  padding: 1px 6px;
+  margin-right: 8px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.combobox-list {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 20;
+  margin-top: 4px;
+  max-height: 260px;
+  overflow-y: auto;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 4px;
+}
+.combobox-option { padding: 10px; font-size: 13px; border-radius: 6px; cursor: pointer; white-space: normal; word-break: break-word; }
+.combobox-option:hover, .combobox-option.active { background: #edf4f1; color: var(--teal-dark); }
+.combobox-option.selected { background: #e3f0ec; color: var(--teal-dark); font-weight: 650; }
+.combobox-option.at-limit { opacity: .5; }
+.combobox-empty { padding: 8px 10px; font-size: 12px; color: var(--muted); }
+
+#userFormMessage { grid-column: 1 / -1; transition: color .2s ease; }
+
+/* ==========================================================================
+   BREAKPOINT: sm (≥480px) — teléfonos grandes / apaisados
+   ========================================================================== */
+@media (min-width: 480px) {
+  .metrics-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .nav-item { width: 76px; min-width: 76px; }
+}
+
+/* ==========================================================================
+   BREAKPOINT: md (≥640px) — tablets pequeñas
+   Los formularios y filtros pasan a 2 columnas; hay más aire en general.
+   ========================================================================== */
+@media (min-width: 640px) {
+  .movement-form { grid-template-columns: 1fr 1fr; }
+  .filters-panel { grid-template-columns: 1fr 1fr; }
+  .catalog-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .login-card { padding: 32px 28px; }
+  .topbar { flex-direction: row; align-items: center; justify-content: space-between; }
+  .top-actions { width: auto; }
+}
+
+/* ==========================================================================
+   BREAKPOINT: lg (≥768px) — tablets grandes
+   ========================================================================== */
+@media (min-width: 768px) {
+  .metrics-grid { grid-template-columns: repeat(4, minmax(160px, 1fr)); }
+  .filters-panel { grid-template-columns: minmax(240px, 1.6fr) repeat(2, minmax(150px, 1fr)); }
+  .topbar h2 { font-size: 24px; }
+  table { min-width: 900px; }
+  th, td { padding: 10px 12px; font-size: 13px; }
+}
+
+/* ==========================================================================
+   BREAKPOINT: xl (≥1024px) — laptop / escritorio
+   Aquí aparece la barra lateral fija tradicional en vez de la barra
+   horizontal superior: hay suficiente ancho para un layout de 2 columnas
+   persistente (sidebar + contenido) sin sacrificar el espacio del contenido.
+   ========================================================================== */
+@media (min-width: 1024px) {
+  .app-shell {
+    display: grid;
+    grid-template-columns: 248px minmax(0, 1fr);
+  }
+
+  .sidebar {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 100vh;
+    position: sticky;
+    top: 0;
+    padding: 24px 18px;
+    width: auto;
+  }
+  .sidebar-top { gap: 0; }
+  .brand { min-height: 56px; margin-bottom: 28px; }
+  .brand h1 { font-size: 18px; }
+
+  .nav-list {
+    display: grid;
+    grid-template-columns: 1fr;
+    overflow: visible;
+    margin: 0;
+    padding: 0;
+    gap: 6px;
+  }
+  .nav-item {
+    grid-template-columns: 28px 1fr;
+    justify-items: stretch;
+    align-items: center;
+    text-align: left;
+    width: 100%;
+    min-width: 0;
+    min-height: 42px;
+    font-size: 14px;
+  }
+  .nav-item span:last-child { -webkit-line-clamp: 1; }
+
+  .user-session { display: grid; gap: 12px; border-top: 1px solid rgba(255, 255, 255, .1); padding-top: 16px; margin-top: 20px; }
+  .user-info strong { max-width: none; }
+  .logout-button { width: 100%; }
+
+  .main { padding: 22px; }
+  .topbar { min-height: 64px; margin-bottom: 18px; }
+  .topbar h2 { font-size: 26px; }
+
+  .content-grid { grid-template-columns: minmax(0, 1.7fr) minmax(280px, .8fr); }
+  .catalog-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+  .table-wrap { max-height: calc(100vh - 238px); }
+  .table-wrap.compact { max-height: 410px; }
+}
+
+/* ==========================================================================
+   BREAKPOINT: xxl (≥1280px) — escritorio grande
+   ========================================================================== */
+@media (min-width: 1280px) {
+  .catalog-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}

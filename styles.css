@@ -518,47 +518,143 @@ tbody tr:hover { background: #f8faf9; }
    6. LOGIN
    ========================================================================== */
 
+/* Estructura:
+   - .login-overlay: capa fija de pantalla completa.
+   - .login-illustration: mitad izquierda (solo desde escritorio), fondo
+     blanco con una ilustración original + texto de marca.
+   - .login-color-panel: mitad derecha (o pantalla completa en móvil), color
+     sólido de marca, con arcos decorativos en la esquina inferior derecha.
+   - .login-card: tarjeta blanca "flotante" centrada sobre el panel de color,
+     con campos tipo píldora (pill) e ícono, inspirada en el diseño de
+     referencia que compartiste. */
+
 .login-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(19, 31, 36, .85);
-  backdrop-filter: blur(8px);
   z-index: 100;
+  display: flex;
+  background: var(--teal);
+  overflow: auto;
+}
+
+.login-illustration {
+  display: none;
+  background: var(--surface);
+}
+
+.login-color-panel {
+  position: relative;
+  flex: 1 1 auto;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 16px;
+  padding: 24px 16px;
+  overflow: hidden;
+  min-height: 100%;
+}
+
+/* Arcos decorativos concéntricos en la esquina inferior derecha del panel de color. */
+.login-color-panel::before,
+.login-color-panel::after {
+  content: "";
+  position: absolute;
+  right: -18%;
+  bottom: -28%;
+  width: 62vmin;
+  height: 62vmin;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, .3);
+  pointer-events: none;
+}
+.login-color-panel::after {
+  right: -28%;
+  bottom: -40%;
+  width: 78vmin;
+  height: 78vmin;
+  border-color: rgba(255, 255, 255, .18);
 }
 
 .login-card {
+  position: relative;
+  z-index: 2;
   background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, .15);
   width: 100%;
-  max-width: 400px;
-  padding: 26px 20px;
+  max-width: 380px;
+  padding: 32px 26px;
+  border-radius: 20px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, .28);
   display: grid;
-  gap: 20px;
+  gap: 18px;
+  margin: auto;
 }
 
-.login-header { text-align: center; display: grid; justify-items: center; gap: 12px; }
-.login-header .brand-mark {
-  background: #21373d;
-  color: #fff;
-  width: 50px;
-  height: 50px;
-  border-radius: 10px;
-  display: grid;
-  place-items: center;
-  font-weight: 700;
-  font-size: 20px;
-  border: 1px solid rgba(255, 255, 255, .1);
-}
-.login-header h2 { margin: 0; font-size: 19px; color: var(--ink); }
-.login-header p { margin: 0; font-size: 13px; color: var(--muted); }
+.login-header { display: grid; gap: 6px; }
+.login-header h2 { margin: 0; font-size: 26px; font-weight: 800; color: var(--ink); }
+.login-header p { margin: 0; font-size: 14px; color: var(--muted); }
 
 .login-form { display: grid; gap: 16px; }
+
+/* Campos con etiqueta arriba (label) + input rectangular de esquinas
+   suavizadas, tal como en el diseño de referencia (Usuario / Contraseña). */
+.form-field {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+}
+.form-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.form-field input {
+  width: 100%;
+  min-height: 46px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 8px 14px;
+  background: #fff;
+  font-size: 14px;
+}
+.form-field input:focus {
+  outline: none;
+  border-color: var(--teal);
+  box-shadow: 0 0 0 3px rgba(18, 107, 99, .12);
+}
+
+.pill-button {
+  border-radius: 10px !important;
+  min-height: 46px !important;
+  font-weight: 700;
+  font-size: 15px;
+  padding-left: 26px;
+  padding-right: 26px;
+}
+
+/* Fila de acciones: enlace "olvidó su contraseña" a la izquierda y botón
+   principal a la derecha, igual que en la referencia. */
+.login-actions-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.login-link {
+  border: none;
+  background: transparent;
+  padding: 0;
+  text-decoration: none;
+  color: var(--teal);
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  min-height: auto;
+  text-align: left;
+  justify-self: start;
+}
+.login-link:hover { color: var(--teal-dark); text-decoration: underline; }
+
 .login-error {
   color: var(--red);
   font-size: 12px;
@@ -566,14 +662,63 @@ tbody tr:hover { background: #f8faf9; }
   text-align: center;
   background: #fff5f4;
   padding: 8px;
-  border-radius: 6px;
+  border-radius: 10px;
   border: 1px solid rgba(184, 61, 53, .15);
 }
 
-.login-hint { border-top: 1px dashed var(--line); padding-top: 16px; font-size: 12px; color: var(--muted); }
-.login-hint p { margin: 0; margin-bottom: 6px; }
-.login-hint ul { margin: 0; padding-left: 16px; display: grid; gap: 4px; }
+/* Caja de ayuda tipo "¿Tienes dudas?" de la referencia: fondo gris suave,
+   esquinas redondeadas, contenido centrado. */
+.login-hint {
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 14px;
+  font-size: 12px;
+  color: var(--muted);
+  text-align: center;
+}
+.login-hint p { margin: 0; margin-bottom: 6px; text-align: center; }
+.login-hint ul { margin: 0; padding-left: 0; list-style: none; display: grid; gap: 4px; text-align: center; }
 .login-hint code { background: #edf4f1; color: var(--teal-dark); padding: 2px 4px; border-radius: 4px; font-family: monospace; }
+
+.login-footer {
+  text-align: center;
+  font-size: 11px;
+  color: var(--muted);
+  margin: 0;
+}
+
+/* Ilustración: escena original simple (no es una copia de ninguna imagen de
+   referencia), en la paleta de colores de la app. */
+.login-illustration-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  height: 100%;
+  padding: 40px;
+  text-align: center;
+}
+.login-illustration-svg { width: min(340px, 80%); height: auto; }
+.login-illustration-text strong { display: block; font-size: 20px; color: var(--ink); }
+.login-illustration-text span { display: block; margin-top: 6px; font-size: 13px; color: var(--muted); max-width: 320px; }
+
+/* Desde escritorio: se arma el layout de dos mitades (ilustración + panel de
+   color) tal como en la referencia. En móvil solo se ve la tarjeta flotante
+   centrada sobre un fondo de color sólido (arriba). */
+@media (min-width: 1024px) {
+  .login-overlay { background: var(--surface); }
+  .login-illustration {
+    display: block;
+    flex: 1 1 55%;
+  }
+  .login-color-panel {
+    flex: 1 1 45%;
+    background: linear-gradient(165deg, var(--teal-dark), var(--teal) 80%);
+  }
+  .login-card { max-width: 400px; padding: 40px 36px; }
+}
 
 /* ==========================================================================
    7. AUDITORÍA / ACCIONES DE TABLA / COMBOBOX MAQUINARIA / VERIFICACIÓN
@@ -702,7 +847,6 @@ tbody tr:hover { background: #f8faf9; }
   .movement-form { grid-template-columns: 1fr 1fr; }
   .filters-panel { grid-template-columns: 1fr 1fr; }
   .catalog-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .login-card { padding: 32px 28px; }
   .topbar { flex-direction: row; align-items: center; justify-content: space-between; }
   .top-actions { width: auto; }
 }

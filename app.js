@@ -476,8 +476,8 @@ function updateSessionUI() {
     if (dom.recoveryForm) {
       dom.recoveryForm.style.display = 'none';
       dom.loginForm.style.display = 'grid';
-      dom.loginCardTitle.textContent = 'Seguimiento de Maquinaria';
-      dom.loginCardSubtitle.textContent = 'Inicie sesión para registrar movimientos';
+      dom.loginCardTitle.textContent = '¡Hola!';
+      dom.loginCardSubtitle.textContent = 'Inicia sesión para registrar movimientos';
       dom.recoveryInput.value = '';
       dom.recoveryMessage.hidden = true;
     }
@@ -2521,8 +2521,8 @@ dom.showRecoveryBtn.addEventListener('click', () => {
 dom.backToLoginBtn.addEventListener('click', () => {
   dom.recoveryForm.style.display = 'none';
   dom.loginForm.style.display = 'grid';
-  dom.loginCardTitle.textContent = 'Seguimiento de Maquinaria';
-  dom.loginCardSubtitle.textContent = 'Iniciar sesión';
+  dom.loginCardTitle.textContent = '¡Hola!';
+  dom.loginCardSubtitle.textContent = 'Inicia sesión para continuar';
 });
 
 dom.recoveryForm.addEventListener('submit', handleRecoverySubmit);

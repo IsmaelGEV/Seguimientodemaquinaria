@@ -149,7 +149,7 @@ function sbError(context, error) {
 
 async function sbReplaceAll(table, rows, matchAllColumn) {
   if (!sb) return;
-  const { error: delErr } = await sb.from(table).delete().neq(matchAllColumn, '__nunca__');
+  const { error: delErr } = await sb.from(table).delete().not(matchAllColumn, 'is', null);
   if (delErr) return sbError(`limpiar tabla ${table}`, delErr);
   if (!rows.length) return;
   const { error: insErr } = await sb.from(table).insert(rows);

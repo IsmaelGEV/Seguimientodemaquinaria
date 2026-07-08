@@ -137,6 +137,161 @@ const dom = {
   userFormCentroCostoSelect: document.querySelector('#userFormCentroCostoSelect')
 };
 
+// ============================================================
+// Capa de conexión con Supabase
+// ============================================================
+const sb = (typeof window !== 'undefined' && window.supabaseClient) ? window.supabaseClient : null;
+const SUPABASE_READY = !!sb;
+
+function sbError(context, error) {
+  if (error) console.error(`[Supabase] Error en ${context}:`, error.message || error);
+}
+
+async function sbReplaceAll(table, rows, matchAllColumn) {
+  if (!sb) return;
+  const { error: delErr } = await sb.from(table).delete().neq(matchAllColumn, '__nunca__');
+  if (delErr) return sbError(`limpiar tabla ${table}`, delErr);
+  if (!rows.length) return;
+  const { error: insErr } = await sb.from(table).insert(rows);
+  if (insErr) sbError(`insertar en tabla ${table}`, insErr);
+}
+
+async function pushCentrosCostoToSupabase(list) {
+  if (!sb) return;
+  await sbReplaceAll('centros_costo', list.map(c => ({ nombre: c.nombre, numero: c.numero })), 'nombre');
+}
+
+async function pushChoferesToSupabase(list) {
+  if (!sb) return;
+  await sbReplaceAll('choferes', list.map(d => ({ first_name: d.firstName, last_name: d.lastName })), 'first_name');
+}
+
+async function pushVehiculosToSupabase(list) {
+  if (!sb) return;
+  await sbReplaceAll('vehiculos', list.map(v => ({ plate: v.plate, marca: v.marca, tipo: v.tipo, color: v.color })), 'plate');
+}
+
+async function pushMaquinariaToSupabase(list) {
+  if (!sb) return;
+  await sbReplaceAll('maquinaria', list.map(m => ({ codigo: m.codigo, descripcion: m.descripcion })), 'codigo');
+}
+
+async function pushUsuariosToSupabase(usersObj) {
+  if (!sb) return;
+  const rows = Object.values(usersObj).map(u => ({
+    username: u.username,
+    first_name: u.firstName,
+    last_name: u.lastName,
+    centro_costo_asignado: u.centroCostoAsignado,
+    email: u.email,
+    role: u.role,
+    password_hash: u.pass
+  }));
+  await sbReplaceAll('usuarios', rows, 'username');
+}
+
+async function pushMovementsToSupabase(list) {
+  if (!sb) return;
+  const rows = list.map(m => ({
+    id: m.id,
+    fecha: m.date,
+    doc_type: m.docType || 'Guía',
+    guide: String(m.guide),
+    machine: m.machine,
+    sender: m.sender,
+    destination: m.destination,
+    driver: m.driver,
+    vehicle_plate: m.vehiclePlate,
+    verification: m.verification,
+    verified_by: m.verifiedBy || null,
+    received_date: m.receivedDate || null,
+    note: m.note || '',
+    created_by: m.createdBy,
+    modified_by: m.modifiedBy || null,
+    modified_at: m.modifiedAt || null
+  }));
+  await sbReplaceAll('movimientos', rows, 'id');
+}
+
+async function bootstrapFromSupabase() {
+  if (!sb) return;
+  try {
+    const [cc, ch, vh, mq, us, mv] = await Promise.all([
+      sb.from('centros_costo').select('*'),
+      sb.from('choferes').select('*'),
+      sb.from('vehiculos').select('*'),
+      sb.from('maquinaria').select('*'),
+      sb.from('usuarios').select('*'),
+      sb.from('movimientos').select('*')
+    ]);
+
+    if (cc.error || ch.error || vh.error || mq.error || us.error || mv.error) {
+      sbError('bootstrap inicial', cc.error || ch.error || vh.error || mq.error || us.error || mv.error);
+      return;
+    }
+
+    if (cc.data) {
+      localStorage.setItem(CENTROS_COSTO_KEY, JSON.stringify(
+        cc.data.map(r => ({ nombre: r.nombre, numero: r.numero }))
+      ));
+    }
+    if (ch.data) {
+      localStorage.setItem(CHOFERES_KEY, JSON.stringify(
+        ch.data.map(r => ({ firstName: r.first_name, lastName: r.last_name }))
+      ));
+    }
+    if (vh.data) {
+      localStorage.setItem(VEHICULOS_KEY, JSON.stringify(
+        vh.data.map(r => ({ plate: r.plate, marca: r.marca, tipo: r.tipo, color: r.color }))
+      ));
+    }
+    if (mq.data) {
+      localStorage.setItem(MAQUINARIA_KEY, JSON.stringify(
+        mq.data.map(r => ({ codigo: r.codigo, descripcion: r.descripcion }))
+      ));
+    }
+    if (us.data) {
+      const usersObj = {};
+      us.data.forEach(r => {
+        usersObj[r.username] = {
+          username: r.username,
+          firstName: r.first_name,
+          lastName: r.last_name,
+          centroCostoAsignado: r.centro_costo_asignado,
+          email: r.email,
+          role: r.role,
+          pass: r.password_hash
+        };
+      });
+      localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(usersObj));
+    }
+    if (mv.data) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(
+        mv.data.map(r => ({
+          id: r.id,
+          date: r.fecha,
+          docType: r.doc_type,
+          guide: r.guide,
+          machine: r.machine,
+          sender: r.sender,
+          destination: r.destination,
+          driver: r.driver,
+          vehiclePlate: r.vehicle_plate,
+          verification: r.verification,
+          verifiedBy: r.verified_by,
+          receivedDate: r.received_date,
+          note: r.note,
+          createdBy: r.created_by,
+          modifiedBy: r.modified_by,
+          modifiedAt: r.modified_at
+        }))
+      ));
+    }
+  } catch (err) {
+    sbError('bootstrap inicial (excepción)', err);
+  }
+}
+
 const CENTROS_COSTO_KEY = 'seguimiento-maquinaria-centros-costo';
 const EMISORES_KEY = 'seguimiento-maquinaria-emisores';
 const DESTINOS_KEY = 'seguimiento-maquinaria-destinos';
@@ -216,6 +371,7 @@ function loadCentrosCosto() {
 
 function saveCentrosCosto(list) {
   localStorage.setItem(CENTROS_COSTO_KEY, JSON.stringify(list));
+  pushCentrosCostoToSupabase(list);
 }
 
 function loadChoferes() {
@@ -232,6 +388,7 @@ function loadChoferes() {
 }
 function saveChoferes(list) {
   localStorage.setItem(CHOFERES_KEY, JSON.stringify(list));
+  pushChoferesToSupabase(list);
 }
 
 function normalizeDrivers(list) {
@@ -292,6 +449,7 @@ function loadVehiculos() {
 
 function saveVehiculos(list) {
   localStorage.setItem(VEHICULOS_KEY, JSON.stringify(list));
+  pushVehiculosToSupabase(list);
 }
 
 function normalizeVehicles(list) {
@@ -340,7 +498,13 @@ function loadMaquinaria() {
 
 function saveMaquinaria(list) {
   localStorage.setItem(MAQUINARIA_KEY, JSON.stringify(list));
+  pushMaquinariaToSupabase(list);
 }
+
+// Descarga el estado real desde Supabase (si está configurado) antes de que
+// el resto de la app inicialice sus datos. "await" a nivel superior solo
+// funciona porque app.js se carga como <script type="module"> en index.html.
+await bootstrapFromSupabase();
 
 let centrosCosto = loadCentrosCosto();
 let choferes = loadChoferes();
@@ -391,6 +555,7 @@ function loadUsers() {
 
 function saveUsers() {
   localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users));
+  pushUsuariosToSupabase(users);
 }
 
 // Core Session Logic
@@ -559,6 +724,7 @@ function loadMovements() {
 
 function saveMovements() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(movements));
+  pushMovementsToSupabase(movements);
 }
 
 const VERIFICATION_STATES = ['Pendiente', 'Verificado', 'No verificado'];

@@ -1669,6 +1669,7 @@ function renderCatalogs() {
   renderVehiculos();
   renderMaquinaria();
   populateUserFormSelects();
+  populateReportFilterOptions();
 }
 
 function populateFormDropdowns() {
@@ -1836,6 +1837,7 @@ function switchView(view) {
     vehiculos: ['Vehículos', 'Gestión de patentes y vehículos'],
     maquinaria: ['Maquinaria', 'Catálogo cargado desde Excel'],
     users: ['Usuarios', 'Gestión de cuentas y accesos'],
+    reports: ['Reportes', 'Movimientos por periodo y ubicación de maquinaria por centro de costo'],
     profile: ['Mi Perfil', 'Información básica de tu cuenta']
   };
   document.querySelectorAll('.view').forEach(i => i.classList.remove('active-view'));
@@ -2352,7 +2354,448 @@ function handleSubmitUser(event) {
   }
 }
 
+// ============================================================
+// MÓDULO DE REPORTERÍA
+// ============================================================
+
+// Devuelve null si el usuario puede ver todos los centros de costo
+// (Administrador), o su centro de costo asignado en mayúsculas si es un
+// usuario restringido (RN-05 / RN-06 del diseño del módulo).
+function getReportPermissionCentro() {
+  if (!currentUser) return '';
+  if (currentUser.role === 'Administrador') return null;
+  return (currentUser.centroCostoAsignado || '').toUpperCase();
+}
+
+// Separa el campo "machine" de un movimiento (ej. "12 - EXCAVADORA, 45 - GRÚA")
+// en sus etiquetas individuales.
+function splitMachineLabels(machineField) {
+  return (machineField || '').split(',').map(s => s.trim()).filter(Boolean);
+}
+
+// A partir de una etiqueta "{codigo} - {descripcion}" (o solo descripción si
+// no hay código), separa sus partes. "key" es el identificador usado para
+// agrupar el historial de una misma máquina.
+function parseMachineLabel(label) {
+  const idx = label.indexOf(' - ');
+  if (idx === -1) return { codigo: null, descripcion: label, key: label };
+  return { codigo: label.slice(0, idx), descripcion: label.slice(idx + 3), key: label.slice(0, idx) };
+}
+
+// Dado un año y número de semana ISO-8601, devuelve la fecha del lunes de
+// esa semana (las semanas ISO siempre van de lunes a domingo).
+function getMondayFromIsoWeek(isoYear, isoWeek) {
+  const jan4 = new Date(Date.UTC(isoYear, 0, 4));
+  const jan4Day = jan4.getUTCDay() || 7;
+  const week1Monday = new Date(jan4);
+  week1Monday.setUTCDate(jan4.getUTCDate() - jan4Day + 1);
+  const monday = new Date(week1Monday);
+  monday.setUTCDate(week1Monday.getUTCDate() + (isoWeek - 1) * 7);
+  return monday;
+}
+
+// Devuelve el string "AAAA-Www" (formato del <input type="week">) para una fecha dada.
+function getIsoWeekString(date) {
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  const dayNum = d.getUTCDay() || 7;
+  d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  const weekNo = Math.ceil(((d - yearStart) / 86400000 + 1) / 7);
+  return `${d.getUTCFullYear()}-W${String(weekNo).padStart(2, '0')}`;
+}
+
+// Calcula el rango de fechas [from, to] (YYYY-MM-DD) según el tipo de
+// periodo elegido en los reportes.
+function getPeriodRange(periodType, refs) {
+  const today = todayISODate();
+  if (periodType === 'dia') {
+    const d = refs.dia || today;
+    return { from: d, to: d };
+  }
+  if (periodType === 'semana') {
+    const weekStr = refs.semana || getIsoWeekString(new Date());
+    const [yearStr, weekPart] = weekStr.split('-W');
+    const monday = getMondayFromIsoWeek(Number(yearStr), Number(weekPart));
+    const sunday = new Date(monday);
+    sunday.setUTCDate(monday.getUTCDate() + 6);
+    const fmt = d => d.toISOString().slice(0, 10);
+    return { from: fmt(monday), to: fmt(sunday) };
+  }
+  if (periodType === 'mes') {
+    const [y, mo] = (refs.mes || today.slice(0, 7)).split('-').map(Number);
+    const first = new Date(y, mo - 1, 1);
+    const last = new Date(y, mo, 0);
+    return { from: first.toISOString().slice(0, 10), to: last.toISOString().slice(0, 10) };
+  }
+  // Rango personalizado
+  return { from: refs.desde || today, to: refs.hasta || today };
+}
+
+// -------- Reporte A: Movimientos por periodo --------
+
+function generateMovementsReport(filters) {
+  const { from, to } = getPeriodRange(filters.periodType, filters);
+  const permCentro = getReportPermissionCentro();
+
+  let data = movements.filter(m => m.date >= from && m.date <= to);
+
+  if (permCentro) {
+    data = data.filter(m =>
+      (m.sender || '').toUpperCase() === permCentro || (m.destination || '').toUpperCase() === permCentro
+    );
+  } else if (filters.centro) {
+    data = data.filter(m => m.sender === filters.centro || m.destination === filters.centro);
+  }
+
+  if (filters.docType) data = data.filter(m => (m.docType || 'Guía') === filters.docType);
+  if (filters.verification) data = data.filter(m => normalizeVerification(m.verification) === filters.verification);
+  if (filters.driver) data = data.filter(m => m.driver === filters.driver);
+  if (filters.plate) data = data.filter(m => m.vehiclePlate === filters.plate);
+  if (filters.machineQuery) {
+    const q = filters.machineQuery.toLowerCase();
+    data = data.filter(m => (m.machine || '').toLowerCase().includes(q));
+  }
+
+  return data.sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : (b.id || 0) - (a.id || 0)));
+}
+
+function summarizeMovements(data) {
+  const summary = { total: data.length, porEstado: {}, porEmisor: {}, porDestino: {} };
+  data.forEach(m => {
+    const estado = getReceptionStatus(m);
+    summary.porEstado[estado] = (summary.porEstado[estado] || 0) + 1;
+    summary.porEmisor[m.sender] = (summary.porEmisor[m.sender] || 0) + 1;
+    summary.porDestino[m.destination] = (summary.porDestino[m.destination] || 0) + 1;
+  });
+  return summary;
+}
+
+function renderMovementsReportSummary(summary) {
+  const el = document.querySelector('#repMovimientosSummary');
+  if (!el) return;
+  const estadoLines = Object.entries(summary.porEstado).map(([k, v]) => `${k}: ${v}`).join(' · ') || 'Sin datos';
+  const emisorLines = Object.entries(summary.porEmisor).map(([k, v]) => `${k}: ${v}`).join(' · ') || 'Sin datos';
+  const destinoLines = Object.entries(summary.porDestino).map(([k, v]) => `${k}: ${v}`).join(' · ') || 'Sin datos';
+  el.innerHTML = `
+    <div class="report-summary-card"><span>Total de movimientos</span><strong>${summary.total}</strong></div>
+    <div class="report-summary-card"><span>Por estado</span><div class="report-summary-breakdown">${estadoLines}</div></div>
+    <div class="report-summary-card"><span>Por centro emisor</span><div class="report-summary-breakdown">${emisorLines}</div></div>
+    <div class="report-summary-card"><span>Por centro destino</span><div class="report-summary-breakdown">${destinoLines}</div></div>
+  `;
+}
+
+function renderMovementsReportTable(data) {
+  const tbody = document.querySelector('#repMovimientosRows');
+  if (!tbody) return;
+  tbody.innerHTML = data.map(m => `
+    <tr>
+      <td>${formatDate(m.date)}</td>
+      <td>${m.docType || 'Guía'}</td>
+      <td>${m.guide}</td>
+      <td>${m.machine}</td>
+      <td>${m.sender}</td>
+      <td>${m.destination}</td>
+      <td>${m.driver}</td>
+      <td>${m.vehiclePlate || '-'}</td>
+      <td>${getReceptionStatus(m)}</td>
+      <td>${m.receivedDate ? formatDate(m.receivedDate) : '-'}</td>
+      <td>${m.verifiedBy ? getUserFullName(m.verifiedBy) : '-'}</td>
+      <td>${getUserFullName(m.createdBy)}</td>
+    </tr>
+  `).join('') || '<tr><td colspan="12" style="text-align:center;color:var(--muted);">Sin movimientos para los filtros seleccionados.</td></tr>';
+}
+
+let lastMovementsReport = [];
+
+function handleGenerateMovementsReport() {
+  const filters = {
+    periodType: document.querySelector('#repPeriodType').value,
+    dia: document.querySelector('#repDia').value,
+    semana: document.querySelector('#repSemana').value,
+    mes: document.querySelector('#repMes').value,
+    desde: document.querySelector('#repDesde').value,
+    hasta: document.querySelector('#repHasta').value,
+    centro: document.querySelector('#repCentro').value,
+    docType: document.querySelector('#repDocType').value,
+    verification: document.querySelector('#repVerification').value,
+    driver: document.querySelector('#repDriver').value,
+    plate: document.querySelector('#repPlate').value,
+    machineQuery: document.querySelector('#repMachineQuery').value.trim()
+  };
+  lastMovementsReport = generateMovementsReport(filters);
+  renderMovementsReportSummary(summarizeMovements(lastMovementsReport));
+  renderMovementsReportTable(lastMovementsReport);
+}
+
+function exportMovementsReport() {
+  const headers = ['fecha', 'tipo_documento', 'numero_documento', 'maquinaria', 'emisor', 'destino', 'chofer', 'patente', 'estado', 'fecha_recepcion', 'recepcionado_por', 'cargado_por'];
+  const lines = [headers.join(',')].concat(
+    lastMovementsReport.map(m => [
+      m.date, m.docType || 'Guía', m.guide, m.machine, m.sender, m.destination, m.driver, m.vehiclePlate || '',
+      getReceptionStatus(m), m.receivedDate || '', m.verifiedBy ? getUserFullName(m.verifiedBy) : '', getUserFullName(m.createdBy)
+    ].map(v => '"' + String(v || '').replaceAll('"', '""') + '"').join(','))
+  );
+  const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = 'reporte-movimientos.csv';
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
+// -------- Reporte B: Maquinaria por Centro de Costo --------
+
+// Determina, para cada máquina del historial (y del catálogo), su estado
+// actual: 'Ubicado' (recepcionada en un centro), 'En tránsito' (movimiento
+// más reciente aún no verificado) o 'Sin registro de recepción' (nunca
+// tuvo un movimiento verificado). Ver reglas RN-B1 a RN-B3 del diseño.
+function computeMachineLocations(asOfDate) {
+  const byMachine = new Map();
+
+  movements.forEach(m => {
+    if (asOfDate && m.date > asOfDate) return;
+    splitMachineLabels(m.machine).forEach(label => {
+      const parsed = parseMachineLabel(label);
+      if (!byMachine.has(parsed.key)) byMachine.set(parsed.key, []);
+      byMachine.get(parsed.key).push({ m, parsed });
+    });
+  });
+
+  // Asegura que las máquinas del catálogo sin ningún movimiento también aparezcan.
+  maquinaria.forEach(item => {
+    const key = item.codigo || item.descripcion;
+    if (!byMachine.has(key)) byMachine.set(key, []);
+  });
+
+  const results = [];
+  byMachine.forEach((entries, key) => {
+    if (!entries.length) {
+      const catalogItem = maquinaria.find(x => (x.codigo || x.descripcion) === key);
+      results.push({
+        codigo: catalogItem ? (catalogItem.codigo || '-') : key,
+        descripcion: catalogItem ? catalogItem.descripcion : key,
+        estado: 'Sin registro de recepción',
+        centro: null, origen: null, destino: null, documento: null, fechaRecepcion: null
+      });
+      return;
+    }
+
+    entries.sort((a, b) => (a.m.date < b.m.date ? 1 : a.m.date > b.m.date ? -1 : (b.m.id || 0) - (a.m.id || 0)));
+    const latest = entries[0];
+    const verification = normalizeVerification(latest.m.verification);
+    const documento = `${latest.m.docType || 'Guía'} ${latest.m.guide}`;
+
+    if (verification === 'Verificado') {
+      results.push({
+        codigo: latest.parsed.codigo || '-',
+        descripcion: latest.parsed.descripcion,
+        estado: 'Ubicado',
+        centro: latest.m.destination,
+        origen: null, destino: null,
+        documento, fechaRecepcion: latest.m.receivedDate
+      });
+    } else {
+      const lastVerified = entries.find(e => normalizeVerification(e.m.verification) === 'Verificado');
+      results.push({
+        codigo: latest.parsed.codigo || '-',
+        descripcion: latest.parsed.descripcion,
+        estado: 'En tránsito',
+        centro: null,
+        origen: lastVerified ? lastVerified.m.destination : (latest.m.sender || null),
+        destino: latest.m.destination,
+        documento, fechaRecepcion: null
+      });
+    }
+  });
+
+  return results;
+}
+
+function generateMaquinariaReport(filters) {
+  const permCentro = getReportPermissionCentro();
+  let data = computeMachineLocations(filters.asOfDate);
+
+  if (filters.machineQuery) {
+    const q = filters.machineQuery.toLowerCase();
+    data = data.filter(r => (r.codigo || '').toLowerCase().includes(q) || (r.descripcion || '').toLowerCase().includes(q));
+  }
+
+  if (permCentro) {
+    // RN-06 / RN-07: un Usuario normal solo ve su propio centro de costo, y
+    // las máquinas "sin registro de recepción" no pertenecen a ningún centro.
+    data = data.filter(r => {
+      if (r.estado === 'Ubicado') return (r.centro || '').toUpperCase() === permCentro;
+      if (r.estado === 'En tránsito') return (r.origen || '').toUpperCase() === permCentro || (r.destino || '').toUpperCase() === permCentro;
+      return false;
+    });
+  } else if (filters.centro) {
+    data = data.filter(r => {
+      if (r.estado === 'Ubicado') return r.centro === filters.centro;
+      if (r.estado === 'En tránsito') return r.origen === filters.centro || r.destino === filters.centro;
+      return false;
+    });
+  }
+
+  if (!filters.incluirTransito) {
+    data = data.filter(r => r.estado !== 'En tránsito');
+  }
+
+  return data;
+}
+
+function summarizeByCentro(data) {
+  const map = new Map();
+  data.forEach(r => {
+    if (r.estado !== 'Ubicado') return;
+    if (!map.has(r.centro)) map.set(r.centro, { centro: r.centro, cantidad: 0, ultimaFecha: null });
+    const entry = map.get(r.centro);
+    entry.cantidad += 1;
+    if (r.fechaRecepcion && (!entry.ultimaFecha || r.fechaRecepcion > entry.ultimaFecha)) entry.ultimaFecha = r.fechaRecepcion;
+  });
+  return Array.from(map.values()).sort((a, b) => a.centro.localeCompare(b.centro));
+}
+
+function renderMaquinariaReportSummary(data) {
+  const el = document.querySelector('#repMaquinariaSummary');
+  if (!el) return;
+  const porCentro = summarizeByCentro(data);
+  const enTransito = data.filter(r => r.estado === 'En tránsito').length;
+  const sinRegistro = data.filter(r => r.estado === 'Sin registro de recepción').length;
+  const cards = porCentro.map(c => `
+    <div class="report-summary-card">
+      <span>${c.centro}</span>
+      <strong>${c.cantidad}</strong>
+      <div class="report-summary-breakdown">${c.ultimaFecha ? 'Última recepción: ' + formatDate(c.ultimaFecha) : ''}</div>
+    </div>
+  `).join('');
+  el.innerHTML = cards + `
+    <div class="report-summary-card"><span>En tránsito</span><strong>${enTransito}</strong></div>
+    <div class="report-summary-card"><span>Sin registro de recepción</span><strong>${sinRegistro}</strong></div>
+  `;
+}
+
+function renderMaquinariaReportTable(data) {
+  const tbody = document.querySelector('#repMaquinariaRows');
+  if (!tbody) return;
+  tbody.innerHTML = data.map(r => {
+    let centroCol = '-';
+    if (r.estado === 'Ubicado') centroCol = r.centro;
+    else if (r.estado === 'En tránsito') centroCol = `${r.origen || '?'} → ${r.destino || '?'}`;
+    return `
+      <tr>
+        <td>${r.codigo || '-'}</td>
+        <td>${r.descripcion}</td>
+        <td>${r.estado}</td>
+        <td>${centroCol}</td>
+        <td>${r.documento || '-'}</td>
+        <td>${r.fechaRecepcion ? formatDate(r.fechaRecepcion) : '-'}</td>
+      </tr>`;
+  }).join('') || '<tr><td colspan="6" style="text-align:center;color:var(--muted);">Sin resultados para los filtros seleccionados.</td></tr>';
+}
+
+let lastMaquinariaReport = [];
+
+function handleGenerateMaquinariaReport() {
+  const periodType = document.querySelector('#repMaqPeriodType').value;
+  const { to: asOfDate } = getPeriodRange(periodType, {
+    dia: document.querySelector('#repMaqDia').value,
+    semana: document.querySelector('#repMaqSemana').value,
+    mes: document.querySelector('#repMaqMes').value,
+    desde: document.querySelector('#repMaqDesde').value,
+    hasta: document.querySelector('#repMaqHasta').value
+  });
+  const filters = {
+    centro: document.querySelector('#repMaqCentro').value,
+    machineQuery: document.querySelector('#repMaqQuery').value.trim(),
+    asOfDate,
+    incluirTransito: document.querySelector('#repMaqTransito').checked
+  };
+  lastMaquinariaReport = generateMaquinariaReport(filters);
+  renderMaquinariaReportSummary(lastMaquinariaReport);
+  renderMaquinariaReportTable(lastMaquinariaReport);
+}
+
+function exportMaquinariaReport() {
+  const headers = ['codigo', 'descripcion', 'estado', 'centro_de_costo', 'documento', 'fecha_recepcion'];
+  const lines = [headers.join(',')].concat(
+    lastMaquinariaReport.map(r => {
+      let centroCol = '-';
+      if (r.estado === 'Ubicado') centroCol = r.centro;
+      else if (r.estado === 'En tránsito') centroCol = `${r.origen || '?'} -> ${r.destino || '?'}`;
+      return [r.codigo || '', r.descripcion, r.estado, centroCol, r.documento || '', r.fechaRecepcion || '']
+        .map(v => '"' + String(v || '').replaceAll('"', '""') + '"').join(',');
+    })
+  );
+  const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = 'reporte-maquinaria-por-centro-de-costo.csv';
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
+// -------- UI: filtros, sub-tabs y restricción por permisos --------
+
+// Pobla los <select> de filtros (centro de costo, chofer, patente) y, si el
+// usuario no es Administrador, fija/oculta el filtro de centro de costo a su
+// propio centro asignado (RN-06).
+function populateReportFilterOptions() {
+  const centroSelects = [document.querySelector('#repCentro'), document.querySelector('#repMaqCentro')];
+  const permCentro = getReportPermissionCentro();
+
+  centroSelects.forEach(sel => {
+    if (!sel) return;
+    const current = sel.value;
+    if (permCentro) {
+      sel.innerHTML = `<option value="${currentUser.centroCostoAsignado}">${currentUser.centroCostoAsignado}</option>`;
+      sel.value = currentUser.centroCostoAsignado;
+      sel.disabled = true;
+    } else {
+      sel.disabled = false;
+      sel.innerHTML = '<option value="">Todos</option>' + centrosCosto.map(c => `<option value="${c.nombre}">${c.nombre}</option>`).join('');
+      if (centrosCosto.some(c => c.nombre === current)) sel.value = current;
+    }
+  });
+
+  const driverSelect = document.querySelector('#repDriver');
+  if (driverSelect) {
+    const current = driverSelect.value;
+    driverSelect.innerHTML = '<option value="">Todos</option>' + choferes.map(c => {
+      const label = driverLabel(c);
+      return `<option value="${label}">${label}</option>`;
+    }).join('');
+    driverSelect.value = current;
+  }
+
+  const plateSelect = document.querySelector('#repPlate');
+  if (plateSelect) {
+    const current = plateSelect.value;
+    plateSelect.innerHTML = '<option value="">Todas</option>' + vehiculos.map(v => `<option value="${v.plate}">${v.plate}</option>`).join('');
+    plateSelect.value = current;
+  }
+}
+
+function switchReportTab(tab) {
+  const isMovimientos = tab === 'movimientos';
+  document.querySelector('#reportMovimientosPanel').style.display = isMovimientos ? '' : 'none';
+  document.querySelector('#reportMaquinariaPanel').style.display = isMovimientos ? 'none' : '';
+  document.querySelector('#reportTabMovimientos').classList.toggle('active', isMovimientos);
+  document.querySelector('#reportTabMaquinaria').classList.toggle('active', !isMovimientos);
+}
+
+function updatePeriodTypeVisibility(prefix) {
+  const type = document.querySelector(`#${prefix}PeriodType`).value;
+  document.querySelector(`#${prefix}DiaWrap`).style.display = type === 'dia' ? '' : 'none';
+  document.querySelector(`#${prefix}SemanaWrap`).style.display = type === 'semana' ? '' : 'none';
+  document.querySelector(`#${prefix}MesWrap`).style.display = type === 'mes' ? '' : 'none';
+  document.querySelector(`#${prefix}DesdeWrap`).style.display = type === 'rango' ? '' : 'none';
+  document.querySelector(`#${prefix}HastaWrap`).style.display = type === 'rango' ? '' : 'none';
+}
+
 function exportCsv() {
+
   const headers = ['id', 'fecha', 'tipo_documento', 'numero_documento', 'maquinaria', 'emisor', 'destino', 'verificacion', 'verificado_por', 'fecha_recepcion', 'recepcion', 'chofer', 'patente', 'nota', 'cargado_por', 'modificado_por', 'fecha_modificacion', 'estado'];
   const lines = [headers.join(',')].concat(
     movements.map(m => {
@@ -2630,6 +3073,22 @@ if (formMachineChipsEl) {
 }
 
 dom.exportCsv.addEventListener('click', exportCsv);
+
+// -------- Listeners del módulo de Reportería --------
+document.querySelector('#reportTabMovimientos').addEventListener('click', () => switchReportTab('movimientos'));
+document.querySelector('#reportTabMaquinaria').addEventListener('click', () => switchReportTab('maquinaria'));
+document.querySelector('#repPeriodType').addEventListener('change', () => updatePeriodTypeVisibility('rep'));
+document.querySelector('#repMaqPeriodType').addEventListener('change', () => updatePeriodTypeVisibility('repMaq'));
+document.querySelector('#generarReporteMovimientos').addEventListener('click', handleGenerateMovementsReport);
+document.querySelector('#exportReporteMovimientos').addEventListener('click', exportMovementsReport);
+document.querySelector('#generarReporteMaquinaria').addEventListener('click', handleGenerateMaquinariaReport);
+document.querySelector('#exportReporteMaquinaria').addEventListener('click', exportMaquinariaReport);
+updatePeriodTypeVisibility('rep');
+updatePeriodTypeVisibility('repMaq');
+document.querySelector('#repDia').value = todayISODate();
+document.querySelector('#repMaqDia').value = todayISODate();
+document.querySelector('#repSemana').value = getIsoWeekString(new Date());
+document.querySelector('#repMaqSemana').value = getIsoWeekString(new Date());
 
 // MEJORA 1: recalcular métricas del Dashboard al cambiar Periodo o Ubicación.
 if (dom.dashboardPeriodFilter) dom.dashboardPeriodFilter.addEventListener('change', renderMetrics);

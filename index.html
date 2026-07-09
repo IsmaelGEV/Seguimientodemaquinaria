@@ -39,6 +39,10 @@
               <span class="icon"><svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 5v3h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></span>
               <span>Vehículos</span>
             </button>
+            <button class="nav-item" type="button" data-view="reports" title="Reportes">
+              <span class="icon"><svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><rect x="7" y="12" width="3" height="6"/><rect x="12" y="8" width="3" height="10"/><rect x="17" y="5" width="3" height="13"/></svg></span>
+              <span>Reportes</span>
+            </button>
             <button class="nav-item" id="navUsers" type="button" data-view="users" title="Usuarios" style="display: none;">
               <span class="icon"><svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
               <span>Usuarios</span>
@@ -365,7 +369,122 @@
             </section>
           </div>
         </section>
-        
+
+        <!-- VISTA REPORTES -->
+        <section class="view" id="reportsView">
+          <section class="panel data-panel">
+            <div class="panel-header">
+              <h3>Reportes</h3>
+              <div style="display:flex;gap:8px;">
+                <button class="ghost-button report-tab-btn active" id="reportTabMovimientos" type="button" data-report-tab="movimientos">Movimientos</button>
+                <button class="ghost-button report-tab-btn" id="reportTabMaquinaria" type="button" data-report-tab="maquinaria">Maquinaria por Centro de Costo</button>
+              </div>
+            </div>
+
+            <!-- SUB-REPORTE: MOVIMIENTOS -->
+            <div id="reportMovimientosPanel" class="report-subpanel">
+              <div class="filters-panel" style="grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));">
+                <label>Periodo
+                  <select id="repPeriodType">
+                    <option value="dia">Día</option>
+                    <option value="semana">Semana</option>
+                    <option value="mes">Mes</option>
+                    <option value="rango">Rango personalizado</option>
+                  </select>
+                </label>
+                <label id="repDiaWrap">Fecha<input type="date" id="repDia" /></label>
+                <label id="repSemanaWrap" style="display:none;">Semana<input type="week" id="repSemana" /></label>
+                <label id="repMesWrap" style="display:none;">Mes<input type="month" id="repMes" /></label>
+                <label id="repDesdeWrap" style="display:none;">Desde<input type="date" id="repDesde" /></label>
+                <label id="repHastaWrap" style="display:none;">Hasta<input type="date" id="repHasta" /></label>
+                <label id="repCentroWrap">Centro de costo
+                  <select id="repCentro"><option value="">Todos</option></select>
+                </label>
+                <label>Tipo de documento
+                  <select id="repDocType">
+                    <option value="">Todos</option>
+                    <option value="Guía">Guía</option>
+                    <option value="Memo">Memo</option>
+                  </select>
+                </label>
+                <label>Estado
+                  <select id="repVerification">
+                    <option value="">Todos</option>
+                    <option value="Pendiente">Pendiente</option>
+                    <option value="Verificado">Recepcionado</option>
+                    <option value="No verificado">No recepcionado</option>
+                  </select>
+                </label>
+                <label>Chofer
+                  <select id="repDriver"><option value="">Todos</option></select>
+                </label>
+                <label>Patente
+                  <select id="repPlate"><option value="">Todas</option></select>
+                </label>
+                <label>Maquinaria<input type="search" id="repMachineQuery" placeholder="Código o descripción..." /></label>
+              </div>
+              <div style="display:flex;gap:8px;margin:0 0 16px;">
+                <button class="primary-button" id="generarReporteMovimientos" type="button">Generar reporte</button>
+                <button class="ghost-button" id="exportReporteMovimientos" type="button">Exportar CSV</button>
+              </div>
+              <div id="repMovimientosSummary" class="report-summary-grid"></div>
+              <div class="table-wrap">
+                <table id="repMovimientosTable">
+                  <thead>
+                    <tr>
+                      <th>Fecha</th><th>Tipo</th><th>N° documento</th><th>Maquinaria</th><th>Emisor</th><th>Destino</th>
+                      <th>Chofer</th><th>Patente</th><th>Estado</th><th>Fecha recepción</th><th>Recepcionado por</th><th>Cargado por</th>
+                    </tr>
+                  </thead>
+                  <tbody id="repMovimientosRows"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- SUB-REPORTE: MAQUINARIA POR CENTRO DE COSTO -->
+            <div id="reportMaquinariaPanel" class="report-subpanel" style="display:none;">
+              <div class="filters-panel" style="grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));">
+                <label id="repMaqCentroWrap">Centro de costo
+                  <select id="repMaqCentro"><option value="">Todos</option></select>
+                </label>
+                <label>Maquinaria<input type="search" id="repMaqQuery" placeholder="Código o descripción..." /></label>
+                <label>Ver ubicación según periodo
+                  <select id="repMaqPeriodType">
+                    <option value="dia">Día</option>
+                    <option value="semana">Semana</option>
+                    <option value="mes">Mes</option>
+                    <option value="rango">Rango personalizado</option>
+                  </select>
+                </label>
+                <label id="repMaqDiaWrap">Fecha<input type="date" id="repMaqDia" /></label>
+                <label id="repMaqSemanaWrap" style="display:none;">Semana<input type="week" id="repMaqSemana" /></label>
+                <label id="repMaqMesWrap" style="display:none;">Mes<input type="month" id="repMaqMes" /></label>
+                <label id="repMaqDesdeWrap" style="display:none;">Desde<input type="date" id="repMaqDesde" /></label>
+                <label id="repMaqHastaWrap" style="display:none;">Hasta<input type="date" id="repMaqHasta" /></label>
+                <label style="display:flex;align-items:center;gap:6px;flex-direction:row;">
+                  <input type="checkbox" id="repMaqTransito" checked style="width:auto;min-height:auto;" /> Incluir en tránsito
+                </label>
+              </div>
+              <p style="font-size:12px;color:var(--muted);margin:-8px 0 12px 0;">
+                La ubicación se calcula considerando solo los movimientos recepcionados hasta el final del periodo elegido (ej. si eliges "Semana", se muestra la ubicación tal como estaba al domingo de esa semana).
+              </p>
+              <div style="display:flex;gap:8px;margin:0 0 16px;">
+                <button class="primary-button" id="generarReporteMaquinaria" type="button">Generar reporte</button>
+                <button class="ghost-button" id="exportReporteMaquinaria" type="button">Exportar CSV</button>
+              </div>
+              <div id="repMaquinariaSummary" class="report-summary-grid"></div>
+              <div class="table-wrap">
+                <table id="repMaquinariaTable">
+                  <thead>
+                    <tr><th>Código</th><th>Descripción</th><th>Estado</th><th>Centro de costo</th><th>Documento</th><th>Fecha recepción</th></tr>
+                  </thead>
+                  <tbody id="repMaquinariaRows"></tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+        </section>
+
         <section class="view" id="profileView">
           <div class="content-grid" style="grid-template-columns: 1fr;">
             <section class="panel" style="max-width: 600px; margin: 0 auto; padding: 32px;">
@@ -553,7 +672,16 @@
               <button class="primary-button pill-button" type="submit">Solicitar clave</button>
             </div>
           </form>
-          
+
+          <div class="login-hint">
+            <p><strong>Cuentas de prueba:</strong></p>
+            <ul>
+              <li><code>admin</code> / <code>admin123</code> (Admin)</li>
+              <li><code>operador1</code> / <code>oper123</code> (Huerto)</li>
+              <li><code>taller1</code> / <code>tall123</code> (Taller)</li>
+            </ul>
+          </div>
+
           <footer class="login-footer">© Seguimiento de Maquinaria — 2026</footer>
         </div>
       </div>

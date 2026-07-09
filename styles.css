@@ -268,6 +268,26 @@ img, svg { max-width: 100%; display: block; }
   gap: 16px;
 }
 
+/* ---------------- Módulo de Reportería ---------------- */
+.report-tab-btn.active { background: var(--teal-dark); color: #fff; }
+.report-subpanel { margin-top: 4px; }
+.report-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.report-summary-card {
+  background: #f8faf9;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+}
+.report-summary-card span { display: block; color: var(--muted); font-size: 12px; margin-bottom: 4px; }
+.report-summary-card strong { display: block; font-size: 20px; line-height: 1.1; }
+.report-summary-breakdown { font-size: 12px; color: var(--muted); margin-top: 6px; line-height: 1.5; }
+
+
 /* --- Dashboard: filtros temporales/ubicación, acciones rápidas de Admin y
    badge de auditoría de contraseñas (todo mobile-first: 1 columna en
    teléfono, se abre a 2 columnas / fila desde el breakpoint sm). --- */

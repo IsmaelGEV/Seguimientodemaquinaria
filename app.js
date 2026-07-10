@@ -830,6 +830,20 @@ function canVerifyMovement(m) {
   return true;
 }
 
+// Movimientos de "carga inicial" (sembrados para fijar la ubicación de
+// partida de cada máquina antes de que existieran movimientos reales).
+// Se identifican por guide === 'INV-INICIAL'. Deben seguir contando para
+// el cálculo de ubicación (computeMachineLocations) y para el detector de
+// maquinaria crítica en Taller (getMachinesCriticallyInWorkshop), pero NO
+// deben aparecer como filas visibles en ninguna pantalla ni exportación.
+function isSeedMovement(m) {
+  return String(m && m.guide) === 'INV-INICIAL';
+}
+
+function visibleMovements() {
+  return movements.filter(m => !isSeedMovement(m));
+}
+
 // Unique fields collector
 function uniqueValues(fields) {
   const values = new Set();
@@ -862,7 +876,7 @@ function getDashboardFilteredMovements() {
   const location = dom.dashboardLocationFilter ? dom.dashboardLocationFilter.value : '';
   const today = todayISODate();
 
-  return movements.filter(m => {
+  return visibleMovements().filter(m => {
     if (location && m.sender !== location && m.destination !== location) return false;
 
     if (period === 'semana') {
@@ -979,7 +993,7 @@ function filteredMovements() {
   const query = dom.searchInput.value.trim().toLowerCase();
   const from = dom.fromDate.value;
   const to = dom.toDate.value;
-  return movements
+  return visibleMovements()
     .filter(m => {
       // Filtrar la nota en la búsqueda para que no se filtre por palabras de notas ocultas
       const noteSearch = canReadNote(m) ? (m.note || '') : '';
@@ -1006,7 +1020,7 @@ function renderTables() {
   const rows = filteredMovements();
   dom.movementRows.innerHTML = rows.map(movementRow).join('');
   dom.resultCount.textContent = rows.length;
-  dom.recentRows.innerHTML = [...movements]
+  dom.recentRows.innerHTML = [...visibleMovements()]
     .sort((a, b) => b.date.localeCompare(a.date) || (b.id - a.id))
     .slice(0, 8)
     .map(recentRow)
@@ -1049,9 +1063,10 @@ function getMachinesCriticallyInWorkshop(thresholdDays = 5) {
 }
 
 function renderAlerts() {
-  const pending = movements.filter(i => getStatus(i) === 'Sin verificar').length;
-  const noNote = movements.filter(i => !String(i.note || '').trim()).length;
-  const inWorkshop = movements.filter(i => getStatus(i) === 'En Taller').length;
+  const visible = visibleMovements();
+  const pending = visible.filter(i => getStatus(i) === 'Sin verificar').length;
+  const noNote = visible.filter(i => !String(i.note || '').trim()).length;
+  const inWorkshop = visible.filter(i => getStatus(i) === 'En Taller').length;
 
   // MEJORA 3: alertas de tiempo crítico (maquinaria con más de 5 días en
   // Taller sin movimiento de salida posterior). Van primero y siempre en
@@ -2437,7 +2452,7 @@ function generateMovementsReport(filters) {
   const { from, to } = getPeriodRange(filters.periodType, filters);
   const permCentro = getReportPermissionCentro();
 
-  let data = movements.filter(m => m.date >= from && m.date <= to);
+  let data = visibleMovements().filter(m => m.date >= from && m.date <= to);
 
   if (permCentro) {
     data = data.filter(m =>
@@ -2798,7 +2813,7 @@ function exportCsv() {
 
   const headers = ['id', 'fecha', 'tipo_documento', 'numero_documento', 'maquinaria', 'emisor', 'destino', 'verificacion', 'verificado_por', 'fecha_recepcion', 'recepcion', 'chofer', 'patente', 'nota', 'cargado_por', 'modificado_por', 'fecha_modificacion', 'estado'];
   const lines = [headers.join(',')].concat(
-    movements.map(m => {
+    visibleMovements().map(m => {
       const noteVal = canReadNote(m) ? (m.note || '') : '🔒 Oculto';
       return [
         m.id,

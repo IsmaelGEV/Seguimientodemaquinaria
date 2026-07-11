@@ -3253,7 +3253,7 @@ dom.backToLoginBtn.addEventListener('click', () => {
   dom.recoveryForm.style.display = 'none';
   dom.loginForm.style.display = 'grid';
   dom.loginCardTitle.textContent = '¡Hola!';
-  dom.loginCardSubtitle.textContent = 'Inicia sesión para continuar';
+  dom.loginCardSubtitle.textContent = 'Inicia sesión para registrar movimientos';
 });
 
 dom.recoveryForm.addEventListener('submit', handleRecoverySubmit);

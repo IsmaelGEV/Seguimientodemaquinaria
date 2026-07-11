@@ -1984,6 +1984,18 @@ function openDrawer() {
   if (dom.formDestinationSearch) dom.formDestinationSearch.disabled = false;
   if (dom.formDriverSearch) dom.formDriverSearch.disabled = false;
   if (dom.formVehicleSearch) dom.formVehicleSearch.disabled = false;
+  const formSenderLockedHint = document.querySelector('#formSenderLockedHint');
+  if (formSenderLockedHint) formSenderLockedHint.style.display = 'none';
+
+  // Las cuentas de usuario (no Administrador) no eligen el Emisor: siempre
+  // es el centro de costo al que está asociada la cuenta, y queda fijo.
+  const isAdminForNewMovement = currentUser && currentUser.role === 'Administrador';
+  if (!isAdminForNewMovement && currentUser && currentUser.centroCostoAsignado) {
+    senderCombobox.select(currentUser.centroCostoAsignado);
+    if (dom.formSenderSearch) dom.formSenderSearch.disabled = true;
+    if (formSenderLockedHint) formSenderLockedHint.style.display = 'block';
+  }
+
   dom.drawer.classList.add('open');
   dom.drawer.setAttribute('aria-hidden', 'false');
   dom.drawerBackdrop.hidden = false;

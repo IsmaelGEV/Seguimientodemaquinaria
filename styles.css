@@ -557,6 +557,32 @@ tbody tr:hover { background: #f8faf9; }
   overflow: auto;
 }
 
+/* ---------------- Advertencia de inactividad de sesión ---------------- */
+.inactivity-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(23, 33, 43, .55);
+  padding: 16px;
+}
+.inactivity-modal {
+  background: var(--surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 24px;
+  max-width: 380px;
+  width: 100%;
+  text-align: center;
+}
+.inactivity-modal h3 { margin: 0 0 10px 0; font-size: 18px; color: var(--ink); }
+.inactivity-modal p { margin: 0 0 18px 0; font-size: 14px; color: var(--muted); line-height: 1.5; }
+.inactivity-modal #inactivityCountdown { color: var(--red); font-size: 16px; }
+.inactivity-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+
+
 .login-illustration {
   display: none;
   background: var(--surface);

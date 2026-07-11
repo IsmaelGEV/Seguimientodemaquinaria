@@ -678,6 +678,19 @@
       </div>
     </div>
     <datalist id="locationOptions"></datalist><datalist id="driverOptions"></datalist>
+
+    <!-- Modal de advertencia por inactividad de sesión -->
+    <div class="inactivity-overlay" id="inactivityOverlay" style="display:none;">
+      <div class="inactivity-modal">
+        <h3>¿Sigues ahí?</h3>
+        <p>Por seguridad, tu sesión se cerrará por inactividad en <strong id="inactivityCountdown">60</strong> segundos.</p>
+        <div class="inactivity-actions">
+          <button type="button" id="inactivityLogoutBtn" class="ghost-button">Cerrar sesión ahora</button>
+          <button type="button" id="inactivityContinueBtn" class="primary-button">Continuar sesión</button>
+        </div>
+      </div>
+    </div>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <!-- Cliente de Supabase (debe cargarse antes de supabase-config.js) -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>

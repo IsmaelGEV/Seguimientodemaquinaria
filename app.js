@@ -2,6 +2,11 @@ const STORAGE_KEY = 'seguimiento-maquinaria-movimientos';
 const SESSION_KEY = 'seguimiento-maquinaria-session';
 const USERS_STORAGE_KEY = 'seguimiento-maquinaria-usuarios';
 
+// Limpieza única: antes la sesión se guardaba en localStorage (persistía
+// entre cierres de pestaña); ahora se guarda en sessionStorage. Se borra
+// cualquier resabio antiguo para que no quede una sesión "fantasma".
+try { localStorage.removeItem(SESSION_KEY); } catch {}
+
 const seedMovements = [
   { date: '2026-06-26', guide: '28916', machine: '136TRACTOR LAND REXDT85F D', sender: 'TALLER', destination: 'MERCEDES CAROLINA', verification: '', driver: 'RICARDO HERNANDEZ', vehiclePlate: 'IJ-KL-56', note: 'Se envia con su reparacion a huerto', createdBy: 'sistema' },
   { date: '2026-06-26', guide: '28915', machine: '137TRACTOR LAND REXDT85F D', sender: 'TALLER', destination: 'LA POLCURA', verification: '', driver: 'CRISTIAN SILVA', vehiclePlate: 'EF-GH-34', note: 'Se envia a huerto con su reparacion', createdBy: 'sistema' },
@@ -20,6 +25,10 @@ const DEFAULT_USERS = {
 };
 
 const dom = {
+  inactivityOverlay: document.querySelector('#inactivityOverlay'),
+  inactivityCountdown: document.querySelector('#inactivityCountdown'),
+  inactivityLogoutBtn: document.querySelector('#inactivityLogoutBtn'),
+  inactivityContinueBtn: document.querySelector('#inactivityContinueBtn'),
   navItems: document.querySelectorAll('.nav-item'),
   viewTitle: document.querySelector('#view-title'),
   viewSubtitle: document.querySelector('#view-subtitle'),
@@ -559,8 +568,11 @@ function saveUsers() {
 }
 
 // Core Session Logic
+// Se usa sessionStorage (no localStorage) a propósito: sessionStorage se
+// borra automáticamente cuando se cierra la pestaña/ventana del navegador,
+// así la sesión no queda abierta indefinidamente en el dispositivo.
 function loadSession() {
-  const stored = localStorage.getItem(SESSION_KEY);
+  const stored = sessionStorage.getItem(SESSION_KEY);
   if (!stored) return null;
   try {
     const user = JSON.parse(stored);
@@ -572,9 +584,9 @@ function loadSession() {
 
 function saveSession(user) {
   if (user) {
-    localStorage.setItem(SESSION_KEY, JSON.stringify({ username: user.username }));
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify({ username: user.username }));
   } else {
-    localStorage.removeItem(SESSION_KEY);
+    sessionStorage.removeItem(SESSION_KEY);
   }
 }
 
@@ -649,6 +661,83 @@ function updateSessionUI() {
   }
 }
 
+// ============================================================
+// CONTROL DE INACTIVIDAD DE SESIÓN
+// ============================================================
+// A los 30 minutos sin actividad del usuario (mouse, teclado, clics,
+// scroll o toques), se muestra una advertencia con 60 segundos para
+// decidir si continuar conectado; si no responde, la sesión se cierra sola.
+const INACTIVITY_LIMIT_MS = 30 * 60 * 1000; // 30 minutos
+const INACTIVITY_WARNING_SECONDS = 60;
+
+let inactivityTimeoutId = null;
+let inactivityCountdownIntervalId = null;
+let inactivityWarningVisible = false;
+
+const INACTIVITY_ACTIVITY_EVENTS = ['mousemove', 'mousedown', 'keydown', 'scroll', 'touchstart', 'click'];
+
+function handleUserActivityForInactivity() {
+  if (inactivityWarningVisible) return; // Mientras se muestra la advertencia, solo cuenta el botón.
+  resetInactivityTimer();
+}
+
+function resetInactivityTimer() {
+  if (inactivityTimeoutId) clearTimeout(inactivityTimeoutId);
+  inactivityTimeoutId = setTimeout(showInactivityWarning, INACTIVITY_LIMIT_MS);
+}
+
+function startInactivityMonitor() {
+  INACTIVITY_ACTIVITY_EVENTS.forEach(evt => window.addEventListener(evt, handleUserActivityForInactivity, { passive: true }));
+  resetInactivityTimer();
+}
+
+function stopInactivityMonitor() {
+  INACTIVITY_ACTIVITY_EVENTS.forEach(evt => window.removeEventListener(evt, handleUserActivityForInactivity));
+  if (inactivityTimeoutId) clearTimeout(inactivityTimeoutId);
+  if (inactivityCountdownIntervalId) clearInterval(inactivityCountdownIntervalId);
+  inactivityTimeoutId = null;
+  inactivityCountdownIntervalId = null;
+  inactivityWarningVisible = false;
+  if (dom.inactivityOverlay) dom.inactivityOverlay.style.display = 'none';
+}
+
+function showInactivityWarning() {
+  if (!currentUser) return;
+  inactivityWarningVisible = true;
+  let secondsLeft = INACTIVITY_WARNING_SECONDS;
+  if (dom.inactivityCountdown) dom.inactivityCountdown.textContent = secondsLeft;
+  if (dom.inactivityOverlay) dom.inactivityOverlay.style.display = 'flex';
+
+  inactivityCountdownIntervalId = setInterval(() => {
+    secondsLeft -= 1;
+    if (dom.inactivityCountdown) dom.inactivityCountdown.textContent = Math.max(secondsLeft, 0);
+    if (secondsLeft <= 0) {
+      clearInterval(inactivityCountdownIntervalId);
+      inactivityCountdownIntervalId = null;
+      inactivityWarningVisible = false;
+      if (dom.inactivityOverlay) dom.inactivityOverlay.style.display = 'none';
+      handleLogout();
+    }
+  }, 1000);
+}
+
+function handleInactivityContinue() {
+  inactivityWarningVisible = false;
+  if (inactivityCountdownIntervalId) clearInterval(inactivityCountdownIntervalId);
+  if (dom.inactivityOverlay) dom.inactivityOverlay.style.display = 'none';
+  resetInactivityTimer();
+}
+
+function handleInactivityLogoutNow() {
+  inactivityWarningVisible = false;
+  if (inactivityCountdownIntervalId) clearInterval(inactivityCountdownIntervalId);
+  if (dom.inactivityOverlay) dom.inactivityOverlay.style.display = 'none';
+  handleLogout();
+}
+
+if (dom.inactivityContinueBtn) dom.inactivityContinueBtn.addEventListener('click', handleInactivityContinue);
+if (dom.inactivityLogoutBtn) dom.inactivityLogoutBtn.addEventListener('click', handleInactivityLogoutNow);
+
 function handleLogin(event) {
   event.preventDefault(); // Evita que la página se recargue
 
@@ -667,6 +756,7 @@ function handleLogin(event) {
     updateSessionUI();
     switchView('dashboard');
     renderAll();
+    startInactivityMonitor();
   } else {
     if (dom.loginError) {
       dom.loginError.hidden = false;
@@ -680,6 +770,7 @@ function handleLogout() {
   saveSession(null);
   updateSessionUI();
   renderAll();
+  stopInactivityMonitor();
 }
 
 // Movements Data Access
@@ -3204,3 +3295,4 @@ if (cancelMaquinariaEditBtn) cancelMaquinariaEditBtn.addEventListener('click', c
 // Initial Execution
 updateSessionUI();
 renderAll();
+if (currentUser) startInactivityMonitor();

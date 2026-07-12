@@ -3308,3 +3308,9 @@ if (cancelMaquinariaEditBtn) cancelMaquinariaEditBtn.addEventListener('click', c
 updateSessionUI();
 renderAll();
 if (currentUser) startInactivityMonitor();
+
+// Ya se determinó si hay sesión activa o no (y se mostró login o dashboard
+// según corresponda): recién ahora se quita la pantalla de carga, para que
+// nunca se alcance a ver un "flash" del login de forma incorrecta.
+const appLoadingOverlay = document.querySelector('#appLoadingOverlay');
+if (appLoadingOverlay) appLoadingOverlay.style.display = 'none';

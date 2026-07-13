@@ -477,6 +477,7 @@ tbody tr:hover { background: #f8faf9; }
   display: grid;
   grid-template-columns: 1fr;
   gap: 14px;
+  align-items: start;
 }
 .full-field { grid-column: 1 / -1; }
 
@@ -849,7 +850,14 @@ tbody tr:hover { background: #f8faf9; }
 .verify-select.status-ok { background: #edf4f1; color: var(--teal-dark); }
 
 .combobox-field { position: relative; }
-.combobox-field input[type="text"] { width: 100%; }
+.combobox-field input[type="text"] { width: 100%; font-weight: 400; }
+.combobox-field input[type="text"]:disabled {
+  background: var(--bg);
+  color: var(--ink);
+  font-weight: 400;
+  opacity: 1;
+  cursor: not-allowed;
+}
 
 .combobox-chips { display: none; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
 .machine-chip {

@@ -15,17 +15,17 @@
             <div><h1>Seguimiento</h1><p>De Maquinaria</p></div>
           </div>
           <nav class="nav-list" aria-label="Secciones">
-            <button class="nav-item active" type="button" data-view="dashboard" title="Panel">
-              <span class="icon"><svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></span>
-              <span>Panel</span>
+            <button class="nav-item active" type="button" data-view="dashboard" title="Home">
+              <span class="icon"><svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V20a1 1 0 0 0 1 1h3v-6h6v6h3a1 1 0 0 0 1-1V9.5"/></svg></span>
+              <span>Home</span>
             </button>
             <button class="nav-item" type="button" data-view="movements" title="Movimientos">
               <span class="icon"><svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/><line x1="8" y1="9" x2="10" y2="9"/></svg></span>
               <span>Movimientos</span>
             </button>
-            <button class="nav-item" type="button" data-view="centrosCosto" title="Centros de costo">
+            <button class="nav-item" type="button" data-view="centrosCosto" title="Centros de trabajo">
               <span class="icon"><svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13" rx="1"/><path d="M16 3v4"/><path d="M8 3v4"/><line x1="3" y1="12" x2="21" y2="12"/></svg></span>
-              <span>Centros de costo</span>
+              <span>Centros de trabajo</span>
             </button>
             <button class="nav-item" type="button" data-view="maquinaria" title="Maquinaria">
               <span class="icon"><svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/><path d="M5 17h-.5a1.5 1.5 0 0 1-1.5-1.5V10a1 1 0 0 1 1-1h9l4 4h1a1 1 0 0 1 1 1v2.5A1.5 1.5 0 0 1 17.5 17H19"/><path d="M9 17h6"/><path d="M13 9V6a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v3"/></svg></span>
@@ -69,8 +69,12 @@
           <div><h2 id="view-title">Panel</h2><p id="view-subtitle">26 de junio de 2026</p></div>
         </header>
         <section class="view active-view" id="dashboardView">
+          <div class="welcome-banner" id="welcomeBanner">
+            <h2 id="welcomeBannerText">¡Hola!</h2>
+            <p id="welcomeBannerSubtext">Bienvenido de vuelta.</p>
+          </div>
           <!-- MEJORA 1: Filtros temporales (Histórico/Mes/Semana) y de Ubicación
-               (Centro de costo) para las métricas del Dashboard. Ver renderMetrics()
+               (Centro de trabajo) para las métricas del Dashboard. Ver renderMetrics()
                en app.js: escucha estos dos <select> y recalcula Movimientos,
                En Taller y Sin verificar en base a ellos. -->
           <section class="dashboard-filters" id="dashboardFilters">
@@ -81,7 +85,7 @@
                 <option value="semana">Esta semana</option>
               </select>
             </label>
-            <label>Ubicación (Centro de costo)
+            <label>Ubicación (Centro de trabajo)
               <select id="dashboardLocationFilter">
                 <option value="">Todas las ubicaciones</option>
               </select>
@@ -105,7 +109,7 @@
 
           <div class="content-grid">
             <section class="panel wide-panel">
-              <div class="panel-header"><h3>Movimientos recientes</h3><button class="ghost-button" type="button" data-view-switch="movements">Ver tabla</button></div>
+              <div class="panel-header"><h3 id="recentMovementsTitle">Últimos movimientos de tu centro de trabajo</h3><button class="ghost-button" type="button" data-view-switch="movements">Ver tabla</button></div>
               <div class="table-wrap compact"><table><thead><tr><th>ID</th><th>Fecha</th><th>Guía / Memo</th><th>Maquinaria</th><th>Origen</th><th>Destino</th><th>Estado</th></tr></thead><tbody id="recentRows"></tbody></table></div>
             </section>
             <!-- MEJORA 3: además de las alertas ya existentes, renderAlerts()
@@ -156,18 +160,18 @@
         <section class="view" id="centrosCostoView">
           <section class="panel data-panel">
             <div class="panel-header">
-              <h3>Centros de costo</h3>
+              <h3>Centros de trabajo</h3>
               <div style="display:flex;gap:8px;align-items:center;">
               </div>
             </div>
             <div id="centroCostoAdminForm" style="display:none;margin-bottom:14px;">
               <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;">
                 <label style="flex:1;min-width:200px;margin:0;">
-                  <span style="font-size:12px;font-weight:650;color:var(--muted);">Nombre del centro de costo</span>
+                  <span style="font-size:12px;font-weight:650;color:var(--muted);">Nombre del centro de trabajo</span>
                   <input type="text" id="centroCostoNameInput" placeholder="Ej: TALLER, LA POLCURA..." style="margin-top:4px;" />
                 </label>
                 <label style="flex:1;min-width:160px;margin:0;">
-                  <span style="font-size:12px;font-weight:650;color:var(--muted);">Número del centro de costo</span>
+                  <span style="font-size:12px;font-weight:650;color:var(--muted);">Número del centro de trabajo</span>
                   <input type="text" id="centroCostoNumberInput" placeholder="Ej: CC-001" style="margin-top:4px;" />
                 </label>
                 <button class="primary-button" id="addCentroCostoBtn" type="button" style="margin-top:0;">Agregar</button>
@@ -302,7 +306,7 @@
                       <tr>
                         <th>Usuario</th>
                         <th>Nombre completo</th>
-                        <th>Centro de costo</th>
+                        <th>Centro de trabajo</th>
                         <th>Correo</th>
                         <th>Rol</th>
                         <th>Acciones</th>
@@ -342,7 +346,7 @@
                 <label>Apellido
                   <input type="text" name="lastName" required placeholder="Ej: Pérez" />
                 </label>
-                <label class="full-field">Centro de costo
+                <label class="full-field">Centro de trabajo
                   <select name="centroCostoAsignado" id="userFormCentroCostoSelect" required></select>
                 </label>
                 <label>Usuario
@@ -377,7 +381,7 @@
               <h3>Reportes</h3>
               <div style="display:flex;gap:8px;">
                 <button class="ghost-button report-tab-btn active" id="reportTabMovimientos" type="button" data-report-tab="movimientos">Movimientos</button>
-                <button class="ghost-button report-tab-btn" id="reportTabMaquinaria" type="button" data-report-tab="maquinaria">Maquinaria por Centro de Costo</button>
+                <button class="ghost-button report-tab-btn" id="reportTabMaquinaria" type="button" data-report-tab="maquinaria">Maquinaria por Centro de Trabajo</button>
               </div>
             </div>
 
@@ -397,7 +401,7 @@
                 <label id="repMesWrap" style="display:none;">Mes<input type="month" id="repMes" /></label>
                 <label id="repDesdeWrap" style="display:none;">Desde<input type="date" id="repDesde" /></label>
                 <label id="repHastaWrap" style="display:none;">Hasta<input type="date" id="repHasta" /></label>
-                <label id="repCentroWrap">Centro de costo
+                <label id="repCentroWrap">Centro de trabajo
                   <select id="repCentro"><option value="">Todos</option></select>
                 </label>
                 <label>Tipo de documento
@@ -441,10 +445,10 @@
               </div>
             </div>
 
-            <!-- SUB-REPORTE: MAQUINARIA POR CENTRO DE COSTO -->
+            <!-- SUB-REPORTE: MAQUINARIA POR CENTRO DE TRABAJO -->
             <div id="reportMaquinariaPanel" class="report-subpanel" style="display:none;">
               <div class="filters-panel" style="grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));">
-                <label id="repMaqCentroWrap">Centro de costo
+                <label id="repMaqCentroWrap">Centro de trabajo
                   <select id="repMaqCentro"><option value="">Todos</option></select>
                 </label>
                 <label>Maquinaria<input type="search" id="repMaqQuery" placeholder="Código o descripción..." /></label>
@@ -476,7 +480,7 @@
               <div class="table-wrap">
                 <table id="repMaquinariaTable">
                   <thead>
-                    <tr><th>Código</th><th>Descripción</th><th>Estado</th><th>Centro de costo</th><th>Documento</th><th>Fecha recepción</th></tr>
+                    <tr><th>Código</th><th>Descripción</th><th>Estado</th><th>Centro de trabajo</th><th>Documento</th><th>Fecha recepción</th></tr>
                   </thead>
                   <tbody id="repMaquinariaRows"></tbody>
                 </table>
@@ -504,7 +508,7 @@
                   <span id="profileEmail" style="color: var(--ink);">-</span>
                 </div>
                 <div style="display: grid; grid-template-columns: 180px 1fr; font-size: 14px;">
-                  <strong style="color: var(--muted);">Centro de costo:</strong>
+                  <strong style="color: var(--muted);">Centro de trabajo:</strong>
                   <span id="profileCentroCosto" style="color: var(--ink);">-</span>
                 </div>
                 <div style="display: grid; grid-template-columns: 180px 1fr; font-size: 14px;">
@@ -523,8 +527,8 @@
       <form id="movementForm" class="movement-form">
         <label>Fecha<input name="date" type="date" required /></label>
         <label>Tipo de documento<select name="docType" id="formDocTypeSelect"><option value="Guía">Guía</option><option value="Memo">Memo</option></select></label>
-        <label id="guideFieldLabel">N° de guía<input name="guideNumber" id="formGuideInput" type="text" inputmode="numeric" pattern="[0-9]{1,10}" maxlength="10" placeholder="Solo números, máx. 10 dígitos" required /></label>
-        <label id="memoFieldLabel" style="display:none;">N° de Memo<input name="memoNumber" id="formMemoInput" type="text" inputmode="numeric" pattern="[0-9]{1,10}" maxlength="10" placeholder="Solo números, máx. 10 dígitos" /></label>
+        <label class="full-field" id="guideFieldLabel">N° de guía<input name="guideNumber" id="formGuideInput" type="text" inputmode="numeric" pattern="[0-9]{1,10}" maxlength="10" placeholder="Solo números, máx. 10 dígitos" required /></label>
+        <label class="full-field" id="memoFieldLabel" style="display:none;">N° de Memo<input name="memoNumber" id="formMemoInput" type="text" inputmode="numeric" pattern="[0-9]{1,10}" maxlength="10" placeholder="Solo números, máx. 10 dígitos" /></label>
         <label class="full-field combobox-field">Maquinaria <span style="font-weight:400;color:var(--muted);font-size:12px;">(máximo 5 artículos)</span>
           <div class="combobox-chips" id="formMachineChips"></div>
           <input type="text" id="formMachineSearch" autocomplete="off" placeholder="Escriba para buscar y agregar maquinaria..." />
@@ -535,7 +539,7 @@
           <input type="text" id="formSenderSearch" autocomplete="off" placeholder="Escriba para buscar..." />
           <input type="hidden" name="sender" id="formSenderSelect" />
           <div class="combobox-list" id="formSenderList" hidden></div>
-          <span id="formSenderLockedHint" style="display:none;font-size:11px;color:var(--muted);margin-top:4px;">Fijo: siempre es el centro de costo de tu cuenta.</span>
+          <span id="formSenderLockedHint" style="display:none;font-size:11px;color:var(--muted);margin-top:4px;">Fijo: siempre es el centro de trabajo de tu cuenta.</span>
         </label>
         <label class="combobox-field">Destino
           <input type="text" id="formDestinationSearch" autocomplete="off" placeholder="Escriba para buscar..." />
@@ -580,7 +584,7 @@
           <h3 style="font-size:13px;color:var(--muted);margin:0 0 10px 0;text-transform:uppercase;letter-spacing:.02em;">Origen y destino</h3>
           <div class="detail-grid">
             <div><strong style="display:block;color:var(--muted);font-size:11px;">Usuario emisor</strong><span id="detailSenderUser">-</span></div>
-            <div><strong style="display:block;color:var(--muted);font-size:11px;">Centro de costo del emisor</strong><span id="detailSenderCentro">-</span></div>
+            <div><strong style="display:block;color:var(--muted);font-size:11px;">Centro de trabajo del emisor</strong><span id="detailSenderCentro">-</span></div>
             <div class="full-field"><strong style="display:block;color:var(--muted);font-size:11px;">Destino del movimiento</strong><span id="detailDestination">-</span></div>
           </div>
         </div>
@@ -640,7 +644,7 @@
           </svg>
           <div class="login-illustration-text">
             <strong>Seguimiento de Maquinaria</strong>
-            <span>Control y trazabilidad de movimientos, centros de costo, choferes y flota, todo en un solo lugar.</span>
+            <span>Control y trazabilidad de movimientos, centros de trabajo, choferes y flota, todo en un solo lugar.</span>
           </div>
         </div>
       </aside>

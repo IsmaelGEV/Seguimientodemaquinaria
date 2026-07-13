@@ -14,7 +14,7 @@ const seedMovements = [
   { date: '2026-06-24', guide: '25230', machine: '965RASTRA BALDAN', sender: 'COVADONGA', destination: 'TALLER', verification: 'v', driver: 'VICTOR CALQUIN', vehiclePlate: 'MN-OP-78', note: 'Llega para su reparacion', createdBy: 'sistema' },
   { date: '2026-06-24', guide: '25228', machine: '612AUTOCARGABLE ALDI', sender: 'TALLER', destination: 'LA POLCURA', verification: '√', driver: 'CRISTIAN FAUNDEZ', vehiclePlate: 'AB-CD-12', note: 'Se envia a huerto', createdBy: 'sistema' },
   { date: '2026-06-19', guide: '25218', machine: 'GENERADOR ELECTRICO LIFAN', sender: 'SAN GREGORIO', destination: 'TALLER', verification: 'V', driver: 'VICTOR CALQUIN', vehiclePlate: 'MN-OP-78', note: 'Llega como devolucion', createdBy: 'sistema' },
-  { date: '2026-06-18', guide: '25210', machine: '348NEBULIZADORA RAUTOP', sender: 'TALLER', destination: 'SANTA JULIA 1', verification: '√', driver: 'VICTOR CALQUIN', vehiclePlate: 'MN-OP-78', note: 'Se envia a huerto con su mantencion', createdBy: 'sistema' },
+  { date: '2026-06-18', guide: '25210', machine: '348NEBULIZADORA RAUTOP', sender: 'TALLER', destination: 'SANTA JULIA', verification: '√', driver: 'VICTOR CALQUIN', vehiclePlate: 'MN-OP-78', note: 'Se envia a huerto con su mantencion', createdBy: 'sistema' },
   { date: '2026-01-22', guide: '30077', machine: 'CARDAM - NEB 38 / NEB 35', sender: 'TALLER', destination: 'COVADONGA', verification: '√', driver: 'ABELINO RAMIREZ', vehiclePlate: 'QR-ST-90', note: 'Cambio nudo y cruceta', createdBy: 'sistema' }
 ];
 
@@ -34,6 +34,8 @@ const dom = {
   viewSubtitle: document.querySelector('#view-subtitle'),
   metricsGrid: document.querySelector('#metricsGrid'),
   recentRows: document.querySelector('#recentRows'),
+  welcomeBannerText: document.querySelector('#welcomeBannerText'),
+  welcomeBannerSubtext: document.querySelector('#welcomeBannerSubtext'),
   alertList: document.querySelector('#alertList'),
   // MEJORA 1: filtros temporales/ubicación del Dashboard
   dashboardPeriodFilter: document.querySelector('#dashboardPeriodFilter'),
@@ -142,7 +144,7 @@ const dom = {
   profileEmail: document.querySelector('#profileEmail'),
   profileCentroCosto: document.querySelector('#profileCentroCosto'),
 
-  // User Form Centro de Costo Element
+  // User Form Centro de Trabajo Element
   userFormCentroCostoSelect: document.querySelector('#userFormCentroCostoSelect')
 };
 
@@ -314,7 +316,7 @@ const defaultCentrosCosto = [
   { nombre: 'COVADONGA', numero: 'CC-003' },
   { nombre: 'LA POLCURA', numero: 'CC-004' },
   { nombre: 'SAN GREGORIO', numero: 'CC-005' },
-  { nombre: 'SANTA JULIA 1', numero: 'CC-006' }
+  { nombre: 'SANTA JULIA', numero: 'CC-006' }
 ];
 const defaultChoferes = [
   { firstName: 'Ricardo', lastName: 'Hernández' },
@@ -354,7 +356,7 @@ function loadCentrosCosto() {
   }
 
   // Migración: unificar los catálogos antiguos de Emisores y Destinos en
-  // un único catálogo de Centros de costo, conservando nombres únicos.
+  // un único catálogo de Centros de trabajo, conservando nombres únicos.
   const oldEmisores = localStorage.getItem(EMISORES_KEY);
   const oldDestinos = localStorage.getItem(DESTINOS_KEY);
   if (oldEmisores || oldDestinos) {
@@ -540,11 +542,11 @@ function loadUsers() {
     if (!parsed.admin) {
       parsed.admin = DEFAULT_USERS.admin;
     }
-    // Migración: todo usuario debe quedar asociado a un único Centro de costo.
+    // Migración: todo usuario debe quedar asociado a un único Centro de trabajo.
     // Los usuarios antiguos tenían campos separados "emisorAsignado" /
     // "destinoAsignado" (o un campo legado "area"); se intenta mapear ese
     // valor contra el catálogo unificado y, si no calza, se asigna el
-    // primer centro de costo disponible.
+    // primer centro de trabajo disponible.
     const centroNames = centrosCosto.map(c => c.nombre);
     Object.values(parsed).forEach(u => {
       if (!u.centroCostoAsignado) {
@@ -620,7 +622,7 @@ function updateSessionUI() {
     // Toggle actions column dynamic visibility & Users Tab Access
     // RN-04: la columna Acciones se oculta por completo (no solo se
     // deshabilita) para cualquier usuario sin permisos de modificación, en
-    // las vistas Movimientos, Centros de costo, Choferes, Vehículos y Maquinaria.
+    // las vistas Movimientos, Centros de trabajo, Choferes, Vehículos y Maquinaria.
     const actionTables = [dom.movementsTable, document.querySelector('#centroCostoTable'), document.querySelector('#choferTable'), document.querySelector('#vehiculoTable'), document.querySelector('#maquinariaTable')];
     if (isAdmin) {
       actionTables.forEach(t => t && t.classList.add('show-actions'));
@@ -903,9 +905,9 @@ function canReadNote(m) {
 }
 
 // La verificación de un movimiento solo puede realizarla el usuario cuyo
-// Centro de costo corresponde al Destino de ese movimiento (o un
+// Centro de trabajo corresponde al Destino de ese movimiento (o un
 // Administrador). El usuario que emitió el movimiento no puede verificar su
-// propio envío (evita autoverificación), salvo cuando el centro de costo
+// propio envío (evita autoverificación), salvo cuando el centro de trabajo
 // emisor y el de destino son el mismo (movimiento interno), caso en el que
 // no existe una contraparte distinta que deba validarlo.
 function canVerifyMovement(m) {
@@ -946,7 +948,7 @@ function uniqueValues(fields) {
 }
 
 // MEJORA 1: mantiene sincronizado el <select> de Ubicación del Dashboard con
-// el catálogo de Centros de costo, preservando la opción actualmente elegida
+// el catálogo de Centros de trabajo, preservando la opción actualmente elegida
 // por el usuario (no se resetea en cada renderAll()).
 function populateDashboardLocationFilter() {
   if (!dom.dashboardLocationFilter) return;
@@ -960,7 +962,7 @@ function populateDashboardLocationFilter() {
 }
 
 // MEJORA 1: aplica los filtros de Periodo (Histórico / Este mes / Esta
-// semana) y Ubicación (Centro de costo, comparado contra Emisor o Destino)
+// semana) y Ubicación (Centro de trabajo, comparado contra Emisor o Destino)
 // sobre el array `movements`, sin mutarlo.
 function getDashboardFilteredMovements() {
   const period = dom.dashboardPeriodFilter ? dom.dashboardPeriodFilter.value : 'historico';
@@ -1111,7 +1113,27 @@ function renderTables() {
   const rows = filteredMovements();
   dom.movementRows.innerHTML = rows.map(movementRow).join('');
   dom.resultCount.textContent = rows.length;
-  dom.recentRows.innerHTML = [...visibleMovements()]
+
+  // Vista Home: solo para cuentas de Usuario (no Administrador) se muestran
+  // únicamente los movimientos de su propio centro de trabajo (como emisor o
+  // destino). El Administrador sigue viendo los movimientos recientes de
+  // todos los centros, sin cambios.
+  const esAdministrador = currentUser && currentUser.role === 'Administrador';
+  const miCentro = (!esAdministrador && currentUser && currentUser.centroCostoAsignado)
+    ? currentUser.centroCostoAsignado.toUpperCase()
+    : null;
+  const recentTitleEl = document.querySelector('#recentMovementsTitle');
+  let recentSource = visibleMovements();
+  if (miCentro) {
+    recentSource = recentSource.filter(m =>
+      (m.sender || '').toUpperCase() === miCentro || (m.destination || '').toUpperCase() === miCentro
+    );
+    if (recentTitleEl) recentTitleEl.textContent = `Últimos movimientos de ${currentUser.centroCostoAsignado}`;
+  } else if (recentTitleEl) {
+    recentTitleEl.textContent = 'Últimos movimientos';
+  }
+
+  dom.recentRows.innerHTML = [...recentSource]
     .sort((a, b) => b.date.localeCompare(a.date) || (b.id - a.id))
     .slice(0, 8)
     .map(recentRow)
@@ -1269,7 +1291,7 @@ function createSearchableSelect({ searchInputId, hiddenInputId, listId, getOptio
   }
 
   // Vuelve a validar/refrescar tras un cambio de catálogo (p. ej. se agregó o
-  // eliminó un Centro de costo, Chofer o Vehículo).
+  // eliminó un Centro de trabajo, Chofer o Vehículo).
   function refresh() {
     const hiddenInput = getHiddenInput();
     const searchInput = getSearchInput();
@@ -1309,14 +1331,14 @@ const senderCombobox = createSearchableSelect({
   hiddenInputId: 'formSenderSelect',
   listId: 'formSenderList',
   getOptions: () => centrosCosto.map(c => c.nombre),
-  emptyMessage: 'No hay centros de costo registrados'
+  emptyMessage: 'No hay centros de trabajo registrados'
 });
 const destinationCombobox = createSearchableSelect({
   searchInputId: 'formDestinationSearch',
   hiddenInputId: 'formDestinationSelect',
   listId: 'formDestinationList',
   getOptions: () => centrosCosto.map(c => c.nombre),
-  emptyMessage: 'No hay centros de costo registrados'
+  emptyMessage: 'No hay centros de trabajo registrados'
 });
 const driverCombobox = createSearchableSelect({
   searchInputId: 'formDriverSearch',
@@ -1358,7 +1380,7 @@ function renderCentrosCosto() {
         </td>
       </tr>`).join('');
   }
-  // El centro de costo actúa dinámicamente como Emisor o Destino según el
+  // El centro de trabajo actúa dinámicamente como Emisor o Destino según el
   // movimiento, por lo que ambos combobox del formulario comparten el mismo
   // catálogo unificado.
   senderCombobox.refresh();
@@ -1792,9 +1814,9 @@ function handleDeleteCatalogItem(type, key) {
     const inUse = movements.some(m => m.sender === key || m.destination === key) ||
       Object.values(users).some(u => u.centroCostoAsignado === key);
     const warning = inUse
-      ? `El centro de costo "${key}" está en uso en movimientos o usuarios registrados. `
+      ? `El centro de trabajo "${key}" está en uso en movimientos o usuarios registrados. `
       : '';
-    const confirmDel = confirm(`${warning}¿Está seguro de que desea eliminar el centro de costo "${key}"?`);
+    const confirmDel = confirm(`${warning}¿Está seguro de que desea eliminar el centro de trabajo "${key}"?`);
     if (confirmDel) {
       centrosCosto = centrosCosto.filter(c => c.nombre !== key);
       saveCentrosCosto(centrosCosto);
@@ -1838,18 +1860,18 @@ function handleAddCatalogItem(type) {
     const numberInput = document.querySelector('#centroCostoNumberInput');
     const nombre = nameInput.value.trim().toUpperCase();
     const numero = (numberInput ? numberInput.value : '').trim();
-    if (!nombre) { alert('El nombre del centro de costo es obligatorio.'); return; }
-    if (!numero) { alert('El número del centro de costo es obligatorio.'); return; }
+    if (!nombre) { alert('El nombre del centro de trabajo es obligatorio.'); return; }
+    if (!numero) { alert('El número del centro de trabajo es obligatorio.'); return; }
     if (editingCentroCostoIndex !== null) {
       const dupName = centrosCosto.some((c, i) => i !== editingCentroCostoIndex && c.nombre === nombre);
       const dupNumber = centrosCosto.some((c, i) => i !== editingCentroCostoIndex && c.numero === numero);
-      if (dupName) { alert('Ya existe un centro de costo con ese nombre.'); return; }
-      if (dupNumber) { alert('Ya existe un centro de costo con ese número.'); return; }
+      if (dupName) { alert('Ya existe un centro de trabajo con ese nombre.'); return; }
+      if (dupNumber) { alert('Ya existe un centro de trabajo con ese número.'); return; }
       centrosCosto[editingCentroCostoIndex] = { nombre, numero };
       cancelCentroCostoEdit();
     } else {
-      if (centrosCosto.some(c => c.nombre === nombre)) { alert('Ya existe un centro de costo con ese nombre.'); return; }
-      if (centrosCosto.some(c => c.numero === numero)) { alert('Ya existe un centro de costo con ese número.'); return; }
+      if (centrosCosto.some(c => c.nombre === nombre)) { alert('Ya existe un centro de trabajo con ese nombre.'); return; }
+      if (centrosCosto.some(c => c.numero === numero)) { alert('Ya existe un centro de trabajo con ese número.'); return; }
       centrosCosto.push({ nombre, numero });
     }
     saveCentrosCosto(centrosCosto);
@@ -1927,6 +1949,19 @@ function renderAll() {
   renderTables();
   renderAlerts();
   renderCatalogs();
+  renderWelcomeBanner();
+}
+
+// Vista Home: saludo personalizado al usuario logeado.
+function renderWelcomeBanner() {
+  if (!dom.welcomeBannerText || !dom.welcomeBannerSubtext) return;
+  if (!currentUser) return;
+  const nombre = currentUser.firstName || currentUser.username;
+  const esAdministrador = currentUser.role === 'Administrador';
+  dom.welcomeBannerText.textContent = `¡Hola, ${nombre}!`;
+  dom.welcomeBannerSubtext.textContent = (!esAdministrador && currentUser.centroCostoAsignado)
+    ? `Este es el resumen de ${currentUser.centroCostoAsignado}.`
+    : 'Bienvenido de vuelta.';
 }
 
 function switchView(view) {
@@ -1936,14 +1971,14 @@ function switchView(view) {
     return;
   }
   const titles = {
-    dashboard: ['Panel', new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })],
+    dashboard: ['Home', new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })],
     movements: ['Movimientos', 'Registro y filtros'],
-    centrosCosto: ['Centros de costo', 'Gestión de centros de costo (emisores / destinos)'],
+    centrosCosto: ['Centros de trabajo', 'Gestión de centros de trabajo (emisores / destinos)'],
     choferes: ['Choferes', 'Gestión de conductores'],
     vehiculos: ['Vehículos', 'Gestión de patentes y vehículos'],
     maquinaria: ['Maquinaria', 'Catálogo cargado desde Excel'],
     users: ['Usuarios', 'Gestión de cuentas y accesos'],
-    reports: ['Reportes', 'Movimientos por periodo y ubicación de maquinaria por centro de costo'],
+    reports: ['Reportes', 'Movimientos por periodo y ubicación de maquinaria por centro de trabajo'],
     profile: ['Mi Perfil', 'Información básica de tu cuenta']
   };
   document.querySelectorAll('.view').forEach(i => i.classList.remove('active-view'));
@@ -1988,7 +2023,7 @@ function openDrawer() {
   if (formSenderLockedHint) formSenderLockedHint.style.display = 'none';
 
   // Las cuentas de usuario (no Administrador) no eligen el Emisor: siempre
-  // es el centro de costo al que está asociada la cuenta, y queda fijo.
+  // es el centro de trabajo al que está asociada la cuenta, y queda fijo.
   const isAdminForNewMovement = currentUser && currentUser.role === 'Administrador';
   if (!isAdminForNewMovement && currentUser && currentUser.centroCostoAsignado) {
     senderCombobox.select(currentUser.centroCostoAsignado);
@@ -2047,7 +2082,7 @@ function closeAnyDrawer() {
 }
 
 // Muestra el detalle completo de un movimiento: usuario que lo emitió,
-// centro de costo del usuario emisor, destino del movimiento, usuario que
+// centro de trabajo del usuario emisor, destino del movimiento, usuario que
 // verificó, fecha de emisión y fecha de recepción.
 function openDetailDrawer(guide) {
   const movement = movements.find(m => String(m.guide) === String(guide));
@@ -2393,10 +2428,10 @@ function handleSubmitUser(event) {
     return;
   }
 
-  // Todo usuario debe estar asociado a un Centro de costo.
+  // Todo usuario debe estar asociado a un Centro de trabajo.
   if (!fields.centroCostoAsignado || !fields.centroCostoAsignado.trim()) {
     dom.userFormMessage.style.color = 'var(--red)';
-    dom.userFormMessage.textContent = 'Debe asignar un Centro de costo al usuario.';
+    dom.userFormMessage.textContent = 'Debe asignar un Centro de trabajo al usuario.';
     return;
   }
 
@@ -2476,8 +2511,8 @@ function handleSubmitUser(event) {
 // MÓDULO DE REPORTERÍA
 // ============================================================
 
-// Devuelve null si el usuario puede ver todos los centros de costo
-// (Administrador), o su centro de costo asignado en mayúsculas si es un
+// Devuelve null si el usuario puede ver todos los centros de trabajo
+// (Administrador), o su centro de trabajo asignado en mayúsculas si es un
 // usuario restringido (RN-05 / RN-06 del diseño del módulo).
 function getReportPermissionCentro() {
   if (!currentUser) return '';
@@ -2662,7 +2697,7 @@ function exportMovementsReport() {
   URL.revokeObjectURL(url);
 }
 
-// -------- Reporte B: Maquinaria por Centro de Costo --------
+// -------- Reporte B: Maquinaria por Centro de Trabajo --------
 
 // Determina, para cada máquina del historial (y del catálogo), su estado
 // actual: 'Ubicado' (recepcionada en un centro), 'En tránsito' (movimiento
@@ -2740,7 +2775,7 @@ function generateMaquinariaReport(filters) {
   }
 
   if (permCentro) {
-    // RN-06 / RN-07: un Usuario normal solo ve su propio centro de costo, y
+    // RN-06 / RN-07: un Usuario normal solo ve su propio centro de trabajo, y
     // las máquinas "sin registro de recepción" no pertenecen a ningún centro.
     data = data.filter(r => {
       if (r.estado === 'Ubicado') return (r.centro || '').toUpperCase() === permCentro;
@@ -2856,8 +2891,8 @@ function exportMaquinariaReport() {
 
 // -------- UI: filtros, sub-tabs y restricción por permisos --------
 
-// Pobla los <select> de filtros (centro de costo, chofer, patente) y, si el
-// usuario no es Administrador, fija/oculta el filtro de centro de costo a su
+// Pobla los <select> de filtros (centro de trabajo, chofer, patente) y, si el
+// usuario no es Administrador, fija/oculta el filtro de centro de trabajo a su
 // propio centro asignado (RN-06).
 function populateReportFilterOptions() {
   const centroSelects = [document.querySelector('#repCentro'), document.querySelector('#repMaqCentro')];

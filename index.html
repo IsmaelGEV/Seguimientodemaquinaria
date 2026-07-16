@@ -107,15 +107,15 @@
             <div class="admin-audit-badge" id="adminAuditBadge"></div>
           </div>
 
-          <div class="content-grid">
+          <div class="content-grid" id="homeContentGrid">
             <section class="panel wide-panel">
-              <div class="panel-header"><h3 id="recentMovementsTitle">Últimos movimientos de tu centro de trabajo</h3><button class="ghost-button" type="button" data-view-switch="movements">Ver tabla</button></div>
+              <div class="panel-header"><h3 id="recentMovementsTitle">Últimos movimientos de tu centro de trabajo</h3><button class="ghost-button" id="homeViewTableBtn" type="button" data-view-switch="movements">Ver tabla</button></div>
               <div class="table-wrap compact"><table><thead><tr><th>ID</th><th>Fecha</th><th>Guía / Memo</th><th>Maquinaria</th><th>Origen</th><th>Destino</th><th>Estado</th></tr></thead><tbody id="recentRows"></tbody></table></div>
             </section>
             <!-- MEJORA 3: además de las alertas ya existentes, renderAlerts()
                  antepone alertas críticas de maquinaria con más de 5 días en
                  Taller sin movimiento de salida posterior. -->
-            <section class="panel"><div class="panel-header"><h3>Alertas</h3></div><div class="alert-list" id="alertList"></div></section>
+            <section class="panel" id="homeAlertsSection"><div class="panel-header"><h3>Alertas</h3></div><div class="alert-list" id="alertList"></div></section>
           </div>
         </section>
         <section class="view" id="movementsView">

@@ -624,6 +624,12 @@ function updateSessionUI() {
     // deshabilita) para cualquier usuario sin permisos de modificación, en
     // las vistas Movimientos, Centros de trabajo, Choferes, Vehículos y Maquinaria.
     const actionTables = [dom.movementsTable, document.querySelector('#centroCostoTable'), document.querySelector('#choferTable'), document.querySelector('#vehiculoTable'), document.querySelector('#maquinariaTable')];
+    const dashboardFiltersEl = document.querySelector('#dashboardFilters');
+    const metricsGridEl = document.querySelector('#metricsGrid');
+    const homeAlertsSectionEl = document.querySelector('#homeAlertsSection');
+    const homeViewTableBtnEl = document.querySelector('#homeViewTableBtn');
+    const homeContentGridEl = document.querySelector('#homeContentGrid');
+
     if (isAdmin) {
       actionTables.forEach(t => t && t.classList.add('show-actions'));
       dom.navUsers.style.display = 'grid'; // Flex/Grid layout inside sidebar
@@ -632,11 +638,27 @@ function updateSessionUI() {
       // MEJORA 2 y 4: acciones rápidas + badge de auditoría, solo Administrador.
       if (dom.adminQuickActions) dom.adminQuickActions.style.display = 'flex';
       renderPasswordAuditBadge();
+
+      // Vista Home del Administrador: sin cambios (filtros, métricas,
+      // alertas y botón "Ver tabla" siguen visibles).
+      if (dashboardFiltersEl) dashboardFiltersEl.style.display = '';
+      if (metricsGridEl) metricsGridEl.style.display = '';
+      if (homeAlertsSectionEl) homeAlertsSectionEl.style.display = '';
+      if (homeViewTableBtnEl) homeViewTableBtnEl.style.display = '';
+      if (homeContentGridEl) homeContentGridEl.classList.remove('single-column');
     } else {
       actionTables.forEach(t => t && t.classList.remove('show-actions'));
       dom.navUsers.style.display = 'none';
       if (dom.adminQuickActions) dom.adminQuickActions.style.display = 'none';
-      
+
+      // Vista Home de cuentas de Usuario: simplificada, solo bienvenida +
+      // últimos movimientos de su centro de trabajo.
+      if (dashboardFiltersEl) dashboardFiltersEl.style.display = 'none';
+      if (metricsGridEl) metricsGridEl.style.display = 'none';
+      if (homeAlertsSectionEl) homeAlertsSectionEl.style.display = 'none';
+      if (homeViewTableBtnEl) homeViewTableBtnEl.style.display = 'none';
+      if (homeContentGridEl) homeContentGridEl.classList.add('single-column');
+
       // Prevent access to users tab if logged out or demoted
       const activeTab = document.querySelector('.nav-item.active');
       if (activeTab && activeTab.dataset.view === 'users') {
@@ -1133,9 +1155,13 @@ function renderTables() {
     recentTitleEl.textContent = 'Últimos movimientos';
   }
 
+  // Ahora que en el Home de Usuario esta lista queda sola (sin métricas ni
+  // alertas), se muestran más filas ya que hay espacio disponible.
+  const recentLimit = miCentro ? 15 : 8;
+
   dom.recentRows.innerHTML = [...recentSource]
     .sort((a, b) => b.date.localeCompare(a.date) || (b.id - a.id))
-    .slice(0, 8)
+    .slice(0, recentLimit)
     .map(recentRow)
     .join('');
 }

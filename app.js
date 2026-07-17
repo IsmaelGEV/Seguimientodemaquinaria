@@ -184,7 +184,7 @@ async function pushVehiculosToSupabase(list) {
 
 async function pushMaquinariaToSupabase(list) {
   if (!sb) return;
-  await sbReplaceAll('maquinaria', list.map(m => ({ codigo: m.codigo, descripcion: m.descripcion })), 'codigo');
+  await sbReplaceAll('maquinaria', list.map(m => ({ codigo: m.codigo, descripcion: m.descripcion, tipo: m.tipo || null })), 'codigo');
 }
 
 async function pushUsuariosToSupabase(usersObj) {
@@ -258,7 +258,7 @@ async function bootstrapFromSupabase() {
     }
     if (mq.data) {
       localStorage.setItem(MAQUINARIA_KEY, JSON.stringify(
-        mq.data.map(r => ({ codigo: r.codigo, descripcion: r.descripcion }))
+        mq.data.map(r => ({ codigo: r.codigo, descripcion: r.descripcion, tipo: r.tipo || '' }))
       ));
     }
     if (us.data) {
@@ -489,11 +489,12 @@ function normalizeMaquinaria(list) {
   list.forEach(item => {
     const codigo = String((item && item.codigo) ?? '').trim();
     const descripcion = String((item && item.descripcion) || '').replace(/\s+/g, ' ').trim();
+    const tipo = String((item && item.tipo) || '').trim();
     if (!codigo && !descripcion) return;
     const key = codigo || descripcion;
     if (seen.has(key)) return;
     seen.add(key);
-    result.push({ codigo, descripcion });
+    result.push({ codigo, descripcion, tipo });
   });
   return result;
 }
@@ -1465,6 +1466,21 @@ function maquinariaLabel(item) {
   return item.codigo ? `${item.codigo} - ${item.descripcion}` : item.descripcion;
 }
 
+const MAQUINARIA_TIPO_LABELS = {
+  'TRACTORES-GRUAS': 'Tractores-Grúas',
+  'CARROS': 'Carros',
+  'NEBULIZADORAS': 'Nebulizadoras',
+  'VEHICULOS': 'Vehículos',
+  'ARADOS': 'Arados',
+  'ABONADORES-APLICADORES': 'Abonadores-Aplicadores',
+  'BAÑO-COMEDOR MOVILES': 'Baño-Comedor Móviles',
+  'OTROS': 'Otros'
+};
+function maquinariaTipoLabel(tipo) {
+  if (!tipo || tipo === 'SIN_TIPO') return '<span style="color:var(--muted);">Sin categoría</span>';
+  return MAQUINARIA_TIPO_LABELS[tipo] || tipo;
+}
+
 function renderMaquinaria() {
   const count = document.querySelector('#maquinariaCount');
   const tbody = document.querySelector('#maquinariaRows');
@@ -1476,6 +1492,7 @@ function renderMaquinaria() {
         <td>${idx + 1}</td>
         <td>${item.codigo || '-'}</td>
         <td>${item.descripcion}</td>
+        <td>${maquinariaTipoLabel(item.tipo)}</td>
         <td class="action-column">
           ${isAdmin ? `<div class="action-btn-group">
             <button class="action-btn edit-btn" onclick="startEditMaquinaria(${idx})" type="button">Editar</button>
@@ -1680,6 +1697,7 @@ async function handleMaquinariaExcelUpload() {
     const sampleKeys = Object.keys(rows[0]);
     const codeKey = sampleKeys.find(k => /cod/i.test(k)) || sampleKeys[0];
     const descKey = sampleKeys.find(k => /desc/i.test(k)) || sampleKeys[1];
+    const tipoKey = sampleKeys.find(k => /tipo/i.test(k));
 
     if (!codeKey || !descKey) {
       alert('No se pudieron identificar las columnas de código y descripción en el archivo.');
@@ -1688,7 +1706,8 @@ async function handleMaquinariaExcelUpload() {
 
     const parsed = normalizeMaquinaria(rows.map(r => ({
       codigo: r[codeKey],
-      descripcion: r[descKey]
+      descripcion: r[descKey],
+      tipo: tipoKey ? r[tipoKey] : ''
     })));
 
     if (!parsed.length) {
@@ -1755,11 +1774,13 @@ function startEditMaquinaria(idx) {
   editingMaquinariaIndex = idx;
   const codeInput = document.querySelector('#maquinariaCodeInput');
   const descInput = document.querySelector('#maquinariaDescInput');
+  const tipoInput = document.querySelector('#maquinariaTipoInput');
   const cancelBtn = document.querySelector('#cancelMaquinariaEdit');
   const addBtn = document.querySelector('#addMaquinariaBtn');
   const item = maquinaria[idx];
   if (codeInput) codeInput.value = item.codigo || '';
   if (descInput) descInput.value = item.descripcion || '';
+  if (tipoInput) tipoInput.value = item.tipo || '';
   if (cancelBtn) cancelBtn.style.display = 'inline-flex';
   if (addBtn) addBtn.textContent = 'Guardar';
 }
@@ -1809,10 +1830,12 @@ function cancelMaquinariaEdit() {
   editingMaquinariaIndex = null;
   const codeInput = document.querySelector('#maquinariaCodeInput');
   const descInput = document.querySelector('#maquinariaDescInput');
+  const tipoInput = document.querySelector('#maquinariaTipoInput');
   const cancelBtn = document.querySelector('#cancelMaquinariaEdit');
   const addBtn = document.querySelector('#addMaquinariaBtn');
   if (codeInput) codeInput.value = '';
   if (descInput) descInput.value = '';
+  if (tipoInput) tipoInput.value = '';
   if (cancelBtn) cancelBtn.style.display = 'none';
   if (addBtn) addBtn.textContent = 'Agregar';
 }
@@ -1951,21 +1974,24 @@ function handleAddCatalogItem(type) {
   } else if (type === 'maquinaria') {
     const codeInput = document.querySelector('#maquinariaCodeInput');
     const descInput = document.querySelector('#maquinariaDescInput');
+    const tipoInput = document.querySelector('#maquinariaTipoInput');
     const codigo = codeInput.value.trim();
     const descripcion = descInput.value.replace(/\s+/g, ' ').trim();
+    const tipo = tipoInput ? tipoInput.value : '';
     if (!descripcion) { alert('La descripción del artículo es obligatoria.'); return; }
     if (editingMaquinariaIndex !== null) {
       const dupCode = codigo && maquinaria.some((m, i) => i !== editingMaquinariaIndex && m.codigo === codigo);
       if (dupCode) { alert('Ya existe un artículo de maquinaria con ese código.'); return; }
-      maquinaria[editingMaquinariaIndex] = { codigo, descripcion };
+      maquinaria[editingMaquinariaIndex] = { codigo, descripcion, tipo };
       cancelMaquinariaEdit();
     } else {
       if (codigo && maquinaria.some(m => m.codigo === codigo)) { alert('Ya existe un artículo de maquinaria con ese código.'); return; }
-      maquinaria.push({ codigo, descripcion });
+      maquinaria.push({ codigo, descripcion, tipo });
     }
     saveMaquinaria(maquinaria);
     codeInput.value = '';
     descInput.value = '';
+    if (tipoInput) tipoInput.value = '';
     renderCatalogs();
   }
 }
@@ -2915,13 +2941,129 @@ function exportMaquinariaReport() {
   URL.revokeObjectURL(url);
 }
 
-// -------- UI: filtros, sub-tabs y restricción por permisos --------
+// -------- Reporte C: Existencias por Tipo --------
+
+// A cada máquina "Ubicada" (recepcionada) le asocia su tipo/categoría desde
+// el catálogo de maquinaria (buscando por código; si no tiene código, por
+// descripción). Las máquinas sin categoría asignada quedan como 'SIN_TIPO'.
+function attachTipoToLocations(locations) {
+  return locations.map(r => {
+    const key = (r.codigo && r.codigo !== '-') ? r.codigo : r.descripcion;
+    const catalogItem = maquinaria.find(m => (m.codigo || m.descripcion) === key);
+    const tipo = (catalogItem && catalogItem.tipo) ? catalogItem.tipo : 'SIN_TIPO';
+    return { ...r, tipo };
+  });
+}
+
+function generateExistenciasReport(filters) {
+  const permCentro = getReportPermissionCentro();
+  let data = computeMachineLocations(filters.asOfDate).filter(r => r.estado === 'Ubicado');
+  data = attachTipoToLocations(data);
+
+  if (permCentro) {
+    data = data.filter(r => (r.centro || '').toUpperCase() === permCentro);
+  } else if (filters.centro) {
+    data = data.filter(r => r.centro === filters.centro);
+  }
+
+  return data;
+}
+
+// Convierte el listado de máquinas ubicadas en una tabla pivote:
+// filas = Centro de trabajo, columnas = cada tipo de maquinaria + Total.
+function pivotExistenciasByCentroYTipo(data) {
+  const centros = new Map(); // centro -> { [tipo]: cantidad, total }
+  data.forEach(r => {
+    if (!centros.has(r.centro)) centros.set(r.centro, { total: 0 });
+    const entry = centros.get(r.centro);
+    entry[r.tipo] = (entry[r.tipo] || 0) + 1;
+    entry.total += 1;
+  });
+  return centros;
+}
+
+function renderExistenciasReportSummary(data) {
+  const el = document.querySelector('#repExistenciasSummary');
+  if (!el) return;
+  const totalesPorTipo = {};
+  data.forEach(r => { totalesPorTipo[r.tipo] = (totalesPorTipo[r.tipo] || 0) + 1; });
+  const cards = MAQUINARIA_TIPO_ORDER.map(tipo => {
+    const cantidad = totalesPorTipo[tipo] || 0;
+    if (!cantidad) return '';
+    return `<div class="report-summary-card"><span>${maquinariaTipoLabel(tipo)}</span><strong>${cantidad}</strong></div>`;
+  }).join('');
+  el.innerHTML = `<div class="report-summary-card"><span>Total de existencias</span><strong>${data.length}</strong></div>` + cards;
+}
+
+// Orden fijo de columnas para que la tabla pivote sea siempre consistente.
+const MAQUINARIA_TIPO_ORDER = ['TRACTORES-GRUAS', 'CARROS', 'NEBULIZADORAS', 'VEHICULOS', 'ARADOS', 'ABONADORES-APLICADORES', 'BAÑO-COMEDOR MOVILES', 'OTROS', 'SIN_TIPO'];
+
+function renderExistenciasReportTable(data) {
+  const thead = document.querySelector('#repExistenciasHead');
+  const tbody = document.querySelector('#repExistenciasRows');
+  if (!thead || !tbody) return;
+
+  const pivot = pivotExistenciasByCentroYTipo(data);
+  const tiposConDatos = MAQUINARIA_TIPO_ORDER.filter(tipo => data.some(r => r.tipo === tipo));
+
+  thead.innerHTML = `<tr><th>Centro de trabajo</th>${tiposConDatos.map(t => `<th>${maquinariaTipoLabel(t)}</th>`).join('')}<th>Total</th></tr>`;
+
+  const centrosOrdenados = Array.from(pivot.keys()).sort((a, b) => a.localeCompare(b));
+  tbody.innerHTML = centrosOrdenados.map(centro => {
+    const entry = pivot.get(centro);
+    const celdas = tiposConDatos.map(t => `<td>${entry[t] || 0}</td>`).join('');
+    return `<tr><td style="font-weight:600;">${centro}</td>${celdas}<td style="font-weight:600;">${entry.total}</td></tr>`;
+  }).join('') || `<tr><td colspan="${tiposConDatos.length + 2}" style="text-align:center;color:var(--muted);">Sin resultados para los filtros seleccionados.</td></tr>`;
+}
+
+let lastExistenciasReport = [];
+
+function handleGenerateExistenciasReport() {
+  const periodType = document.querySelector('#repExistPeriodType').value;
+  const { to: asOfDate } = getPeriodRange(periodType, {
+    dia: document.querySelector('#repExistDia').value,
+    semana: document.querySelector('#repExistSemana').value,
+    mes: document.querySelector('#repExistMes').value,
+    desde: document.querySelector('#repExistDesde').value,
+    hasta: document.querySelector('#repExistHasta').value
+  });
+  const filters = {
+    centro: document.querySelector('#repExistCentro').value,
+    asOfDate
+  };
+  lastExistenciasReport = generateExistenciasReport(filters);
+  renderExistenciasReportSummary(lastExistenciasReport);
+  renderExistenciasReportTable(lastExistenciasReport);
+}
+
+function exportExistenciasReport() {
+  const pivot = pivotExistenciasByCentroYTipo(lastExistenciasReport);
+  const tiposConDatos = MAQUINARIA_TIPO_ORDER.filter(tipo => lastExistenciasReport.some(r => r.tipo === tipo));
+  const headers = ['centro_de_trabajo', ...tiposConDatos.map(t => maquinariaTipoLabel(t).replace(/<[^>]+>/g, '')), 'total'];
+  const centrosOrdenados = Array.from(pivot.keys()).sort((a, b) => a.localeCompare(b));
+  const lines = [headers.join(',')].concat(
+    centrosOrdenados.map(centro => {
+      const entry = pivot.get(centro);
+      return [centro, ...tiposConDatos.map(t => entry[t] || 0), entry.total]
+        .map(v => '"' + String(v || 0).replaceAll('"', '""') + '"').join(',');
+    })
+  );
+  const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = 'reporte-existencias-por-tipo.csv';
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
+
 
 // Pobla los <select> de filtros (centro de trabajo, chofer, patente) y, si el
 // usuario no es Administrador, fija/oculta el filtro de centro de trabajo a su
 // propio centro asignado (RN-06).
 function populateReportFilterOptions() {
-  const centroSelects = [document.querySelector('#repCentro'), document.querySelector('#repMaqCentro')];
+  const centroSelects = [document.querySelector('#repCentro'), document.querySelector('#repMaqCentro'), document.querySelector('#repExistCentro')];
   const permCentro = getReportPermissionCentro();
 
   centroSelects.forEach(sel => {
@@ -2957,11 +3099,12 @@ function populateReportFilterOptions() {
 }
 
 function switchReportTab(tab) {
-  const isMovimientos = tab === 'movimientos';
-  document.querySelector('#reportMovimientosPanel').style.display = isMovimientos ? '' : 'none';
-  document.querySelector('#reportMaquinariaPanel').style.display = isMovimientos ? 'none' : '';
-  document.querySelector('#reportTabMovimientos').classList.toggle('active', isMovimientos);
-  document.querySelector('#reportTabMaquinaria').classList.toggle('active', !isMovimientos);
+  document.querySelector('#reportMovimientosPanel').style.display = tab === 'movimientos' ? '' : 'none';
+  document.querySelector('#reportMaquinariaPanel').style.display = tab === 'maquinaria' ? '' : 'none';
+  document.querySelector('#reportExistenciasPanel').style.display = tab === 'existencias' ? '' : 'none';
+  document.querySelector('#reportTabMovimientos').classList.toggle('active', tab === 'movimientos');
+  document.querySelector('#reportTabMaquinaria').classList.toggle('active', tab === 'maquinaria');
+  document.querySelector('#reportTabExistencias').classList.toggle('active', tab === 'existencias');
 }
 
 function updatePeriodTypeVisibility(prefix) {
@@ -3256,18 +3399,26 @@ dom.exportCsv.addEventListener('click', exportCsv);
 // -------- Listeners del módulo de Reportería --------
 document.querySelector('#reportTabMovimientos').addEventListener('click', () => switchReportTab('movimientos'));
 document.querySelector('#reportTabMaquinaria').addEventListener('click', () => switchReportTab('maquinaria'));
+document.querySelector('#reportTabExistencias').addEventListener('click', () => switchReportTab('existencias'));
 document.querySelector('#repPeriodType').addEventListener('change', () => updatePeriodTypeVisibility('rep'));
 document.querySelector('#repMaqPeriodType').addEventListener('change', () => updatePeriodTypeVisibility('repMaq'));
+document.querySelector('#repExistPeriodType').addEventListener('change', () => updatePeriodTypeVisibility('repExist'));
 document.querySelector('#generarReporteMovimientos').addEventListener('click', handleGenerateMovementsReport);
 document.querySelector('#exportReporteMovimientos').addEventListener('click', exportMovementsReport);
 document.querySelector('#generarReporteMaquinaria').addEventListener('click', handleGenerateMaquinariaReport);
 document.querySelector('#exportReporteMaquinaria').addEventListener('click', exportMaquinariaReport);
+document.querySelector('#generarReporteExistencias').addEventListener('click', handleGenerateExistenciasReport);
+document.querySelector('#exportReporteExistencias').addEventListener('click', exportExistenciasReport);
 updatePeriodTypeVisibility('rep');
 updatePeriodTypeVisibility('repMaq');
+updatePeriodTypeVisibility('repExist');
 document.querySelector('#repDia').value = todayISODate();
 document.querySelector('#repMaqDia').value = todayISODate();
+document.querySelector('#repExistDia').value = todayISODate();
 document.querySelector('#repSemana').value = getIsoWeekString(new Date());
 document.querySelector('#repMaqSemana').value = getIsoWeekString(new Date());
+document.querySelector('#repExistSemana').value = getIsoWeekString(new Date());
+
 
 // MEJORA 1: recalcular métricas del Dashboard al cambiar Periodo o Ubicación.
 if (dom.dashboardPeriodFilter) dom.dashboardPeriodFilter.addEventListener('change', renderMetrics);

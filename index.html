@@ -203,7 +203,7 @@
                 </div>
                 <button class="primary-button" id="uploadMaquinariaBtn" type="button">Cargar Excel</button>
               </div>
-              <p style="font-size:12px;color:var(--muted);margin:0 0 14px 0;">El archivo debe tener columnas de <strong>código</strong> y <strong>descripción</strong> (ej. "Cod. Maquina" / "Desc. Maquina"). Al cargarlo se <strong>reemplaza</strong> el catálogo completo de Maquinaria.</p>
+              <p style="font-size:12px;color:var(--muted);margin:0 0 14px 0;">El archivo debe tener columnas de <strong>código</strong> y <strong>descripción</strong> (ej. "Cod. Maquina" / "Desc. Maquina"), y opcionalmente una columna <strong>Tipo</strong> (categoría). Al cargarlo se <strong>reemplaza</strong> el catálogo completo de Maquinaria.</p>
               <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;">
                 <label style="flex:0 0 140px;margin:0;">
                   <span style="font-size:12px;font-weight:650;color:var(--muted);">Código</span>
@@ -213,13 +213,27 @@
                   <span style="font-size:12px;font-weight:650;color:var(--muted);">Descripción</span>
                   <input type="text" id="maquinariaDescInput" placeholder="Ej: TRACTOR LAND REX 85F #36" style="margin-top:4px;" />
                 </label>
+                <label style="flex:0 0 200px;margin:0;">
+                  <span style="font-size:12px;font-weight:650;color:var(--muted);">Tipo</span>
+                  <select id="maquinariaTipoInput" style="margin-top:4px;">
+                    <option value="">Sin categoría</option>
+                    <option value="TRACTORES-GRUAS">Tractores-Grúas</option>
+                    <option value="CARROS">Carros</option>
+                    <option value="NEBULIZADORAS">Nebulizadoras</option>
+                    <option value="VEHICULOS">Vehículos</option>
+                    <option value="ARADOS">Arados</option>
+                    <option value="ABONADORES-APLICADORES">Abonadores-Aplicadores</option>
+                    <option value="BAÑO-COMEDOR MOVILES">Baño-Comedor Móviles</option>
+                    <option value="OTROS">Otros</option>
+                  </select>
+                </label>
                 <button class="primary-button" id="addMaquinariaBtn" type="button" style="margin-top:0;">Agregar</button>
                 <button class="ghost-button" id="cancelMaquinariaEdit" type="button" style="display:none;">Cancelar</button>
               </div>
             </div>
             <div class="table-wrap">
               <table id="maquinariaTable">
-                <thead><tr><th>#</th><th>Código</th><th>Descripción</th><th class="action-column">Acciones</th></tr></thead>
+                <thead><tr><th>#</th><th>Código</th><th>Descripción</th><th>Tipo</th><th class="action-column">Acciones</th></tr></thead>
                 <tbody id="maquinariaRows"></tbody>
               </table>
             </div>
@@ -382,6 +396,7 @@
               <div style="display:flex;gap:8px;">
                 <button class="ghost-button report-tab-btn active" id="reportTabMovimientos" type="button" data-report-tab="movimientos">Movimientos</button>
                 <button class="ghost-button report-tab-btn" id="reportTabMaquinaria" type="button" data-report-tab="maquinaria">Maquinaria por Centro de Trabajo</button>
+                <button class="ghost-button report-tab-btn" id="reportTabExistencias" type="button" data-report-tab="existencias">Existencias por Tipo</button>
               </div>
             </div>
 
@@ -483,6 +498,42 @@
                     <tr><th>Código</th><th>Descripción</th><th>Estado</th><th>Centro de trabajo</th><th>Documento</th><th>Fecha recepción</th></tr>
                   </thead>
                   <tbody id="repMaquinariaRows"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- SUB-REPORTE: EXISTENCIAS POR TIPO -->
+            <div id="reportExistenciasPanel" class="report-subpanel" style="display:none;">
+              <div class="filters-panel" style="grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));">
+                <label id="repExistCentroWrap">Centro de trabajo
+                  <select id="repExistCentro"><option value="">Todos</option></select>
+                </label>
+                <label>Ver existencias según periodo
+                  <select id="repExistPeriodType">
+                    <option value="dia">Día</option>
+                    <option value="semana">Semana</option>
+                    <option value="mes">Mes</option>
+                    <option value="rango">Rango personalizado</option>
+                  </select>
+                </label>
+                <label id="repExistDiaWrap">Fecha<input type="date" id="repExistDia" /></label>
+                <label id="repExistSemanaWrap" style="display:none;">Semana<input type="week" id="repExistSemana" /></label>
+                <label id="repExistMesWrap" style="display:none;">Mes<input type="month" id="repExistMes" /></label>
+                <label id="repExistDesdeWrap" style="display:none;">Desde<input type="date" id="repExistDesde" /></label>
+                <label id="repExistHastaWrap" style="display:none;">Hasta<input type="date" id="repExistHasta" /></label>
+              </div>
+              <p style="font-size:12px;color:var(--muted);margin:-8px 0 12px 0;">
+                Cuenta solo la maquinaria efectivamente ubicada (recepcionada) en cada centro al final del periodo elegido; no incluye maquinaria en tránsito ni sin registro de recepción.
+              </p>
+              <div style="display:flex;gap:8px;margin:0 0 16px;">
+                <button class="primary-button" id="generarReporteExistencias" type="button">Generar reporte</button>
+                <button class="ghost-button" id="exportReporteExistencias" type="button">Exportar CSV</button>
+              </div>
+              <div id="repExistenciasSummary" class="report-summary-grid"></div>
+              <div class="table-wrap">
+                <table id="repExistenciasTable">
+                  <thead id="repExistenciasHead"></thead>
+                  <tbody id="repExistenciasRows"></tbody>
                 </table>
               </div>
             </div>

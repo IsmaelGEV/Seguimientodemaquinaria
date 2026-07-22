@@ -1467,14 +1467,34 @@ function maquinariaLabel(item) {
 }
 
 const MAQUINARIA_TIPO_LABELS = {
-  'TRACTORES-GRUAS': 'Tractores-Grúas',
   'CARROS': 'Carros',
+  'TRACTORES': 'Tractores',
+  'GRUAS': 'Grúas',
   'NEBULIZADORAS': 'Nebulizadoras',
+  'BAÑOS QUIMICOS': 'Baños Químicos',
   'VEHICULOS': 'Vehículos',
+  'COMEDOR MOVILES': 'Comedor Móviles',
+  'OTROS': 'Otros',
   'ARADOS': 'Arados',
-  'ABONADORES-APLICADORES': 'Abonadores-Aplicadores',
-  'BAÑO-COMEDOR MOVILES': 'Baño-Comedor Móviles',
-  'OTROS': 'Otros'
+  'RANA': 'Rana',
+  'APLICADORES': 'Aplicadores',
+  'TROMPOS': 'Trompos',
+  'BOMBAS': 'Bombas',
+  'TRASPALETAS': 'Traspaletas',
+  'TINA': 'Tina',
+  'PALAS': 'Palas',
+  'ABONADORES': 'Abonadores',
+  'ALZAHOMBRE': 'Alzahombre',
+  'GENERADORES': 'Generadores',
+  'TRITURADORAS': 'Trituradoras',
+  'COMPRESORES': 'Compresores',
+  'MAQ COMPOST': 'Maq. Compost',
+  'MAQ HUMUS': 'Maq. Humus',
+  'MOTOBOMBA': 'Motobomba',
+  'EQUIPOS DE PODA': 'Equipos de Poda',
+  'AZUFRADORAS': 'Azufradoras',
+  'ENGRASADORAS': 'Engrasadoras',
+  'MOTOSIERRAS': 'Motosierras'
 };
 function maquinariaTipoLabel(tipo) {
   if (!tipo || tipo === 'SIN_TIPO') return '<span style="color:var(--muted);">Sin categoría</span>';
@@ -2996,7 +3016,7 @@ function renderExistenciasReportSummary(data) {
 }
 
 // Orden fijo de columnas para que la tabla pivote sea siempre consistente.
-const MAQUINARIA_TIPO_ORDER = ['TRACTORES-GRUAS', 'CARROS', 'NEBULIZADORAS', 'VEHICULOS', 'ARADOS', 'ABONADORES-APLICADORES', 'BAÑO-COMEDOR MOVILES', 'OTROS', 'SIN_TIPO'];
+const MAQUINARIA_TIPO_ORDER = ['CARROS', 'TRACTORES', 'GRUAS', 'NEBULIZADORAS', 'BAÑOS QUIMICOS', 'VEHICULOS', 'COMEDOR MOVILES', 'ARADOS', 'RANA', 'APLICADORES', 'TROMPOS', 'BOMBAS', 'TRASPALETAS', 'TINA', 'PALAS', 'ABONADORES', 'ALZAHOMBRE', 'GENERADORES', 'TRITURADORAS', 'COMPRESORES', 'MAQ COMPOST', 'MAQ HUMUS', 'MOTOBOMBA', 'EQUIPOS DE PODA', 'AZUFRADORAS', 'ENGRASADORAS', 'MOTOSIERRAS', 'OTROS', 'SIN_TIPO'];
 
 function renderExistenciasReportTable(data) {
   const thead = document.querySelector('#repExistenciasHead');
